@@ -238,9 +238,6 @@ package:
     - "!.git/**"
     - "!*.md"
 
-plugins:
-  - serverless-python-requirements
-
 custom:
   pythonRequirements:
     dockerizePip: true
