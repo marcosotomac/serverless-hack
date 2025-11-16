@@ -48,6 +48,7 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         "location": payload["location"].strip(),
         "description": payload["description"].strip(),
         "urgency": urgency,
+        "priority": urgency,
         "status": "pendiente",
         "reportedBy": claims["sub"],
         "reporterRole": claims["role"],

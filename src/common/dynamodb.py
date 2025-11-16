@@ -61,21 +61,22 @@ def get_incident(incident_id: str) -> Optional[Dict[str, Any]]:
     return response.get("Item")
 
 
-def list_incidents(status: Optional[str] = None) -> List[Dict[str, Any]]:
+def list_incidents(statuses: Optional[Iterable[str]] = None) -> List[Dict[str, Any]]:
     table = _incidents_table()
     items: List[Dict[str, Any]] = []
-    if status:
-        kwargs: Dict[str, Any] = {
-            "IndexName": "status-index",
-            "KeyConditionExpression": Key("status").eq(status),
-        }
-        while True:
-            response = table.query(**kwargs)
-            items.extend(response.get("Items", []))
-            last_key = response.get("LastEvaluatedKey")
-            if not last_key:
-                break
-            kwargs["ExclusiveStartKey"] = last_key
+    if statuses:
+        for status in statuses:
+            kwargs: Dict[str, Any] = {
+                "IndexName": "status-index",
+                "KeyConditionExpression": Key("status").eq(status),
+            }
+            while True:
+                response = table.query(**kwargs)
+                items.extend(response.get("Items", []))
+                last_key = response.get("LastEvaluatedKey")
+                if not last_key:
+                    break
+                kwargs["ExclusiveStartKey"] = last_key
     else:
         kwargs = {}
         while True:
@@ -125,14 +126,17 @@ def update_incident(
     return response["Attributes"]
 
 
-def save_connection(connection_id: str, user: str, role: str) -> None:
+def save_connection(connection_id: str, user: str, role: str, ttl_seconds: int) -> None:
     table = _connections_table()
+    expires_at = int(time()) + ttl_seconds
     table.put_item(
         Item={
             "connectionId": connection_id,
             "user": user,
             "role": role,
             "connectedAt": int(time()),
+            "lastPingAt": int(time()),
+            "expiresAt": expires_at,
         }
     )
 
@@ -140,6 +144,19 @@ def save_connection(connection_id: str, user: str, role: str) -> None:
 def delete_connection(connection_id: str) -> None:
     table = _connections_table()
     table.delete_item(Key={"connectionId": connection_id})
+
+
+def touch_connection(connection_id: str, ttl_seconds: int) -> None:
+    table = _connections_table()
+    expires_at = int(time()) + ttl_seconds
+    table.update_item(
+        Key={"connectionId": connection_id},
+        UpdateExpression="SET lastPingAt = :now, expiresAt = :expiresAt",
+        ExpressionAttributeValues={
+            ":now": int(time()),
+            ":expiresAt": expires_at,
+        },
+    )
 
 
 def list_connections_by_roles(roles: Iterable[str]) -> List[Dict[str, Any]]:

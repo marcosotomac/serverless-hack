@@ -20,7 +20,7 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         except ValueError as exc:
             return json_response(400, {"message": str(exc)})
 
-    incidents = list_incidents(status_filter)
+    incidents = list_incidents([status_filter] if status_filter else None)
     if claims["role"] == "estudiante":
         incidents = [item for item in incidents if item.get("reportedBy") == claims["sub"]]
 

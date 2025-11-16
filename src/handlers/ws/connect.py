@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict
 
 from src.common.auth import decode_session_token
@@ -15,6 +16,6 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         return {"statusCode": 401, "body": str(exc)}
 
     connection_id = event["requestContext"]["connectionId"]
-    save_connection(connection_id, user=claims["sub"], role=claims["role"])
+    ttl_seconds = int(os.environ.get("CONNECTION_TTL_SECONDS", "3600"))
+    save_connection(connection_id, user=claims["sub"], role=claims["role"], ttl_seconds=ttl_seconds)
     return {"statusCode": 200, "body": "Conectado"}
-

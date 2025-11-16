@@ -30,6 +30,8 @@ provider:
     SMTP_PORT: ${opt:smtpPort, env:SMTP_PORT, '587'}
     INCIDENTS_TABLE: ${self:custom.incidentsTableName}
     CONNECTIONS_TABLE: ${self:custom.connectionsTableName}
+    CONNECTION_TTL_SECONDS: ${opt:connectionTtl, env:CONNECTION_TTL_SECONDS, '3600'}
+    SAGEMAKER_ENDPOINT_NAME: ${opt:sagemakerEndpoint, env:SAGEMAKER_ENDPOINT_NAME, ''}
     WEBSOCKET_API_ENDPOINT:
       Fn::Join:
         - ""
@@ -75,6 +77,14 @@ functions:
       - httpApi:
           method: get
           path: /incidents
+  adminListIncidents:
+    handler: src/handlers/incidents/admin_list.handler
+    description: Allows authorities to view and filter all active incidents.
+    timeout: 10
+    events:
+      - httpApi:
+          method: get
+          path: /admin/incidents
   updateIncident:
     handler: src/handlers/incidents/update.handler
     description: Updates incident status or assignment, reserved for personal/autoridad roles.
@@ -83,6 +93,39 @@ functions:
       - httpApi:
           method: patch
           path: /incidents/{incidentId}
+  prioritizeIncident:
+    handler: src/handlers/incidents/prioritize.handler
+    description: Permite a autoridades priorizar incidentes para el panel.
+    timeout: 10
+    events:
+      - httpApi:
+          method: patch
+          path: /incidents/{incidentId}/priority
+  closeIncident:
+    handler: src/handlers/incidents/close.handler
+    description: Marca un incidente como resuelto desde el panel administrativo.
+    timeout: 10
+    events:
+      - httpApi:
+          method: patch
+          path: /incidents/{incidentId}/close
+  incidentHistory:
+    handler: src/handlers/incidents/history.handler
+    description: Devuelve el historial completo de acciones de un incidente.
+    timeout: 10
+    events:
+      - httpApi:
+          method: get
+          path: /incidents/{incidentId}/history
+  predictIncidents:
+    handler: src/handlers/analytics/predict.handler
+    description: Consulta SageMaker para identificar patrones y predicciones de riesgos.
+    timeout: 15
+    memorySize: 2048
+    events:
+      - httpApi:
+          method: post
+          path: /analytics/predictions
   wsConnect:
     handler: src/handlers/ws/connect.handler
     description: Registers a WebSocket connection associated to the authenticated user.
@@ -98,6 +141,11 @@ functions:
     description: Handles fallback WebSocket messages (pings/unsupported actions).
     events:
       - websocket: $default
+  wsPing:
+    handler: src/handlers/ws/ping.handler
+    description: Mantiene viva la conexión y renueva el TTL para conexiones activas.
+    events:
+      - websocket: ping
 
 package:
   patterns:
@@ -170,3 +218,6 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+        TimeToLiveSpecification:
+          AttributeName: expiresAt
+          Enabled: true
