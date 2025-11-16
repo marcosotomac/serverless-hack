@@ -124,15 +124,6 @@ functions:
       - httpApi:
           method: get
           path: /incidents/{incidentId}/history
-  predictIncidents:
-    handler: src/handlers/analytics/predict.handler
-    description: Consulta SageMaker para identificar patrones y predicciones de riesgos.
-    timeout: 15
-    memorySize: 2048
-    events:
-      - httpApi:
-          method: post
-          path: /analytics/predictions
   requestMediaUpload:
     handler: src/handlers/incidents/request_upload.handler
     description: Genera URLs prefirmadas para subir imágenes o videos de incidentes.
@@ -276,3 +267,12 @@ resources:
       - httpApi:
           method: post
           path: /incidents/{incidentId}/significance
+  predictIncidents:
+    handler: src/handlers/analytics/predict.handler
+    description: Consulta SageMaker para identificar patrones y predicciones de riesgos.
+    timeout: 15
+    memorySize: 2048
+    events:
+      - httpApi:
+          method: post
+          path: /analytics/predictions
