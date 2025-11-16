@@ -11,6 +11,9 @@ def json_response(
     default_headers = {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With",
+        "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
+        "Access-Control-Max-Age": "300",
     }
     if headers:
         default_headers.update(headers)

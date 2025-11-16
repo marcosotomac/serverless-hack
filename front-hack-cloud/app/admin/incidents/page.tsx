@@ -1,0 +1,722 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getAuthHeaders, getUser, isAuthenticated } from "@/lib/auth";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Activity,
+  MapPin,
+  Calendar,
+  Filter,
+  TrendingUp,
+  Shield,
+  ArrowUpCircle,
+  XCircle,
+  Search,
+  Eye,
+} from "lucide-react";
+
+type IncidentStatus = "pendiente" | "en_atencion" | "resuelto";
+type UrgencyLevel = "baja" | "media" | "alta" | "critica";
+
+interface Incident {
+  incidentId: string;
+  type: string;
+  location: string;
+  description: string;
+  urgency: UrgencyLevel;
+  priority: UrgencyLevel;
+  status: IncidentStatus;
+  reportedBy: string;
+  reporterRole: string;
+  createdAt: number;
+  updatedAt: number;
+  lastNote?: string;
+}
+
+const STATUS_CONFIG = {
+  pendiente: {
+    label: "Pendiente",
+    color:
+      "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
+    icon: Clock,
+    dotColor: "bg-yellow-500",
+  },
+  en_atencion: {
+    label: "En Atención",
+    color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    icon: Activity,
+    dotColor: "bg-blue-500",
+  },
+  resuelto: {
+    label: "Resuelto",
+    color:
+      "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
+    icon: CheckCircle2,
+    dotColor: "bg-green-500",
+  },
+};
+
+const URGENCY_CONFIG = {
+  baja: {
+    label: "Baja",
+    color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  },
+  media: {
+    label: "Media",
+    color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
+  },
+  alta: {
+    label: "Alta",
+    color: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  },
+  critica: {
+    label: "Crítica",
+    color: "bg-red-500/10 text-red-600 dark:text-red-400",
+  },
+};
+
+const TYPE_EMOJI: Record<string, string> = {
+  infraestructura: "🏗️",
+  servicios: "🔧",
+  emergencia: "🚨",
+  seguridad: "🛡️",
+  tecnologia: "💻",
+  otros: "📋",
+};
+
+export default function AdminIncidentsPage() {
+  const router = useRouter();
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<IncidentStatus | "all">("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(
+    null
+  );
+  const [dialogType, setDialogType] = useState<
+    "status" | "priority" | "close" | null
+  >(null);
+  const [dialogLoading, setDialogLoading] = useState(false);
+  const [dialogData, setDialogData] = useState<{ value: string; note: string }>(
+    {
+      value: "",
+      note: "",
+    }
+  );
+  const user = getUser();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/auth/login");
+      return;
+    }
+
+    const userData = getUser();
+    if (userData?.role === "estudiante") {
+      router.push("/incidents");
+      return;
+    }
+
+    fetchIncidents();
+  }, [router]);
+
+  const fetchIncidents = async () => {
+    try {
+      const response = await fetch(
+        "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/admin/incidents",
+        { headers: getAuthHeaders() }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setIncidents(data.incidents || []);
+      }
+    } catch (err) {
+      console.error("Error fetching incidents:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openDialog = (
+    incident: Incident,
+    type: "status" | "priority" | "close"
+  ) => {
+    setSelectedIncident(incident);
+    setDialogType(type);
+    setDialogData({
+      value:
+        type === "status"
+          ? incident.status
+          : type === "priority"
+          ? incident.priority
+          : "",
+      note: "",
+    });
+  };
+
+  const closeDialog = () => {
+    setSelectedIncident(null);
+    setDialogType(null);
+    setDialogData({ value: "", note: "" });
+  };
+
+  const handleDialogSubmit = async () => {
+    if (!selectedIncident) return;
+
+    setDialogLoading(true);
+    try {
+      let url = `https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents/${selectedIncident.incidentId}`;
+      let body: any = { note: dialogData.note };
+
+      if (dialogType === "status") {
+        body.status = dialogData.value;
+      } else if (dialogType === "priority") {
+        url += "/priority";
+        body.priority = dialogData.value;
+      } else if (dialogType === "close") {
+        url += "/close";
+      }
+
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        await fetchIncidents();
+        closeDialog();
+      }
+    } catch (err) {
+      console.error("Error updating incident:", err);
+    } finally {
+      setDialogLoading(false);
+    }
+  };
+
+  const filteredIncidents = incidents.filter((incident) => {
+    const matchesFilter = filter === "all" || incident.status === filter;
+    const matchesSearch =
+      searchTerm === "" ||
+      incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      incident.type.toLowerCase().includes(searchTerm.toLowerCase());
+
+    return matchesFilter && matchesSearch;
+  });
+
+  const stats = {
+    total: incidents.length,
+    pendiente: incidents.filter((i) => i.status === "pendiente").length,
+    en_atencion: incidents.filter((i) => i.status === "en_atencion").length,
+    resuelto: incidents.filter((i) => i.status === "resuelto").length,
+    critica: incidents.filter((i) => i.priority === "critica").length,
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString("es-PE", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      {/* Animated Background */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-1/2 -left-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-blob" />
+        <div className="absolute top-1/4 -right-1/4 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-blob animation-delay-2000" />
+      </div>
+
+      <div className="container max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl shadow-lg">
+              <Shield className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Panel Administrativo
+              </h1>
+              <p className="text-muted-foreground">
+                Gestión y seguimiento de todos los incidentes
+              </p>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <Card className="border-2">
+            <CardContent className="pt-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por ubicación, descripción o tipo..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 text-base"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-3">
+              <CardDescription className="flex items-center gap-2 text-xs">
+                <TrendingUp className="w-4 h-4" />
+                Total
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats.total}</div>
+            </CardContent>
+          </Card>
+
+          {(Object.keys(STATUS_CONFIG) as IncidentStatus[]).map((status) => {
+            const config = STATUS_CONFIG[status];
+            const Icon = config.icon;
+
+            return (
+              <Card
+                key={status}
+                className="border-2 shadow-lg hover:shadow-xl transition-shadow"
+              >
+                <CardHeader className="pb-3">
+                  <CardDescription className="flex items-center gap-2 text-xs">
+                    <Icon className="w-4 h-4" />
+                    {config.label}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{stats[status]}</div>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow border-red-200 dark:border-red-800">
+            <CardHeader className="pb-3">
+              <CardDescription className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                <AlertCircle className="w-4 h-4" />
+                Críticos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+                {stats.critica}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filter Tabs */}
+        <Tabs
+          defaultValue="all"
+          className="space-y-6"
+          onValueChange={(v) => setFilter(v as IncidentStatus | "all")}
+        >
+          <Card className="border-2 shadow-lg">
+            <CardContent className="pt-6">
+              <TabsList className="grid w-full grid-cols-4 gap-2">
+                <TabsTrigger value="all" className="gap-2">
+                  <Filter className="w-4 h-4" />
+                  Todos
+                </TabsTrigger>
+                <TabsTrigger value="pendiente" className="gap-2">
+                  <Clock className="w-4 h-4" />
+                  Pendientes
+                </TabsTrigger>
+                <TabsTrigger value="en_atencion" className="gap-2">
+                  <Activity className="w-4 h-4" />
+                  En Atención
+                </TabsTrigger>
+                <TabsTrigger value="resuelto" className="gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Resueltos
+                </TabsTrigger>
+              </TabsList>
+            </CardContent>
+          </Card>
+
+          <TabsContent value={filter} className="space-y-4">
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="border-2">
+                    <CardHeader>
+                      <Skeleton className="h-6 w-2/3" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-20 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredIncidents.length === 0 ? (
+              <Card className="border-2 border-dashed">
+                <CardContent className="py-16 text-center">
+                  <AlertCircle className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">
+                    No hay incidentes
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {searchTerm
+                      ? "No se encontraron incidentes que coincidan con tu búsqueda"
+                      : `No hay incidentes ${
+                          filter === "all"
+                            ? ""
+                            : `con estado "${
+                                STATUS_CONFIG[filter as IncidentStatus]?.label
+                              }"`
+                        }`}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {filteredIncidents.map((incident) => {
+                  const statusConfig = STATUS_CONFIG[incident.status];
+                  const StatusIcon = statusConfig.icon;
+                  const urgencyConfig = URGENCY_CONFIG[incident.urgency];
+                  const priorityConfig = URGENCY_CONFIG[incident.priority];
+
+                  return (
+                    <Card
+                      key={incident.incidentId}
+                      className="border-2 shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-2xl">
+                                {TYPE_EMOJI[incident.type] || "📋"}
+                              </span>
+                              <CardTitle className="text-xl">
+                                {incident.type.charAt(0).toUpperCase() +
+                                  incident.type.slice(1)}
+                              </CardTitle>
+                              <Badge
+                                className={`${statusConfig.color} border gap-1.5`}
+                              >
+                                <div
+                                  className={`w-2 h-2 rounded-full ${statusConfig.dotColor} animate-pulse`}
+                                />
+                                {statusConfig.label}
+                              </Badge>
+                              <Badge className={urgencyConfig.color}>
+                                U: {urgencyConfig.label}
+                              </Badge>
+                              <Badge className={priorityConfig.color}>
+                                P: {priorityConfig.label}
+                              </Badge>
+                            </div>
+
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+                              <div className="flex items-center gap-1.5">
+                                <MapPin className="w-4 h-4" />
+                                {incident.location}
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="w-4 h-4" />
+                                {formatDate(incident.createdAt)}
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Shield className="w-4 h-4" />
+                                {incident.reporterRole}
+                              </div>
+                            </div>
+
+                            <p className="text-muted-foreground line-clamp-2">
+                              {incident.description}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col gap-2 shrink-0">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() =>
+                                router.push(`/incidents/${incident.incidentId}`)
+                              }
+                            >
+                              <Eye className="w-4 h-4" />
+                              Ver
+                            </Button>
+
+                            {user?.role === "autoridad" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-2"
+                                  onClick={() =>
+                                    openDialog(incident, "priority")
+                                  }
+                                >
+                                  <ArrowUpCircle className="w-4 h-4" />
+                                  Prioridad
+                                </Button>
+
+                                {incident.status !== "resuelto" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="gap-2 text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                                    onClick={() =>
+                                      openDialog(incident, "close")
+                                    }
+                                  >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Cerrar
+                                  </Button>
+                                )}
+                              </>
+                            )}
+
+                            {(user?.role === "personal" ||
+                              user?.role === "autoridad") &&
+                              incident.status !== "resuelto" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-2"
+                                  onClick={() => openDialog(incident, "status")}
+                                >
+                                  <Activity className="w-4 h-4" />
+                                  Estado
+                                </Button>
+                              )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Status Update Dialog */}
+      <Dialog open={dialogType === "status"} onOpenChange={() => closeDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cambiar Estado del Incidente</DialogTitle>
+            <DialogDescription>
+              Actualiza el estado del incidente y agrega una nota opcional
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nuevo Estado</Label>
+              <RadioGroup
+                value={dialogData.value}
+                onValueChange={(value) =>
+                  setDialogData({ ...dialogData, value })
+                }
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="pendiente" id="status-pendiente" />
+                  <Label htmlFor="status-pendiente" className="cursor-pointer">
+                    Pendiente
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="en_atencion" id="status-en_atencion" />
+                  <Label
+                    htmlFor="status-en_atencion"
+                    className="cursor-pointer"
+                  >
+                    En Atención
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="resuelto" id="status-resuelto" />
+                  <Label htmlFor="status-resuelto" className="cursor-pointer">
+                    Resuelto
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Nota (Opcional)</Label>
+              <Textarea
+                placeholder="Agrega comentarios sobre este cambio..."
+                value={dialogData.note}
+                onChange={(e) =>
+                  setDialogData({ ...dialogData, note: e.target.value })
+                }
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closeDialog}
+              disabled={dialogLoading}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleDialogSubmit} disabled={dialogLoading}>
+              {dialogLoading ? "Actualizando..." : "Actualizar Estado"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Priority Update Dialog */}
+      <Dialog
+        open={dialogType === "priority"}
+        onOpenChange={() => closeDialog()}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cambiar Prioridad del Incidente</DialogTitle>
+            <DialogDescription>
+              Ajusta la prioridad del incidente según su importancia
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nueva Prioridad</Label>
+              <RadioGroup
+                value={dialogData.value}
+                onValueChange={(value) =>
+                  setDialogData({ ...dialogData, value })
+                }
+              >
+                {(Object.keys(URGENCY_CONFIG) as UrgencyLevel[]).map(
+                  (level) => (
+                    <div key={level} className="flex items-center space-x-2">
+                      <RadioGroupItem value={level} id={`priority-${level}`} />
+                      <Label
+                        htmlFor={`priority-${level}`}
+                        className="cursor-pointer"
+                      >
+                        {URGENCY_CONFIG[level].label}
+                      </Label>
+                    </div>
+                  )
+                )}
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Nota (Opcional)</Label>
+              <Textarea
+                placeholder="Explica por qué cambias la prioridad..."
+                value={dialogData.note}
+                onChange={(e) =>
+                  setDialogData({ ...dialogData, note: e.target.value })
+                }
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closeDialog}
+              disabled={dialogLoading}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleDialogSubmit} disabled={dialogLoading}>
+              {dialogLoading ? "Actualizando..." : "Actualizar Prioridad"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Close Dialog */}
+      <Dialog open={dialogType === "close"} onOpenChange={() => closeDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cerrar Incidente</DialogTitle>
+            <DialogDescription>
+              Marca este incidente como resuelto. Esta acción cambiará su estado
+              a "Resuelto".
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nota de Cierre (Opcional)</Label>
+              <Textarea
+                placeholder="Describe cómo se resolvió el incidente..."
+                value={dialogData.note}
+                onChange={(e) =>
+                  setDialogData({ ...dialogData, note: e.target.value })
+                }
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closeDialog}
+              disabled={dialogLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDialogSubmit}
+              disabled={dialogLoading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {dialogLoading ? "Cerrando..." : "Cerrar Incidente"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

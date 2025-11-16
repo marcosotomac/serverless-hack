@@ -17,9 +17,15 @@ provider:
       allowedHeaders:
         - Content-Type
         - Authorization
+        - X-Requested-With
       allowedMethods:
         - OPTIONS
+        - GET
         - POST
+        - PATCH
+        - PUT
+        - DELETE
+      maxAge: 300
   environment:
     USERS_TABLE: ${self:custom.usersTableName}
     AUTH_SECRET: ${opt:authSecret, env:AUTH_SECRET, 'dev-secret'}
