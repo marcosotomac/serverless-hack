@@ -334,7 +334,7 @@ resources:
           BlockPublicPolicy: true
           IgnorePublicAcls: true
           RestrictPublicBuckets: true
-    
+
     AnalyticsDataBucket:
       Type: AWS::S3::Bucket
       Properties:
@@ -344,7 +344,7 @@ resources:
           BlockPublicPolicy: true
           IgnorePublicAcls: true
           RestrictPublicBuckets: true
-    
+
     AnalyticsResultsBucket:
       Type: AWS::S3::Bucket
       Properties:
@@ -354,7 +354,7 @@ resources:
           BlockPublicPolicy: true
           IgnorePublicAcls: true
           RestrictPublicBuckets: true
-    
+
     GlueDatabase:
       Type: AWS::Glue::Database
       Properties:
@@ -362,7 +362,7 @@ resources:
         DatabaseInput:
           Name: ${self:custom.glueDatabase}
           Description: Database for incidents analytics
-    
+
     GlueIncidentsTable:
       Type: AWS::Glue::Table
       Properties:

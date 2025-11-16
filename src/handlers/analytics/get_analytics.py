@@ -111,36 +111,36 @@ def execute_athena_query(query: str, database: str, output_location: str):
         QueryExecutionContext={"Database": database},
         ResultConfiguration={"OutputLocation": output_location}
     )
-    
+
     query_execution_id = response["QueryExecutionId"]
-    
+
     # Esperar a que termine la ejecución (máx 60 segundos)
     max_attempts = 60
     attempt = 0
-    
+
     while attempt < max_attempts:
         query_status = athena_client.get_query_execution(
             QueryExecutionId=query_execution_id
         )
-        
+
         status = query_status["QueryExecution"]["Status"]["State"]
-        
+
         if status == "SUCCEEDED":
             # Obtener resultados
             results = athena_client.get_query_results(
                 QueryExecutionId=query_execution_id
             )
             return parse_athena_results(results)
-        
+
         elif status in ["FAILED", "CANCELLED"]:
             reason = query_status["QueryExecution"]["Status"].get(
                 "StateChangeReason", "Unknown error"
             )
             raise Exception(f"Query failed: {reason}")
-        
+
         time.sleep(1)
         attempt += 1
-    
+
     raise Exception("Query execution timeout")
 
 
@@ -149,13 +149,13 @@ def parse_athena_results(results):
     Parsea los resultados de Athena a formato JSON
     """
     rows = results["ResultSet"]["Rows"]
-    
+
     if len(rows) == 0:
         return []
-    
+
     # Primera fila contiene los headers
     headers = [col["VarCharValue"] for col in rows[0]["Data"]]
-    
+
     # Resto de filas son datos
     data = []
     for row in rows[1:]:
@@ -173,7 +173,7 @@ def parse_athena_results(results):
                         pass
             row_data[headers[i]] = value
         data.append(row_data)
-    
+
     return data
 
 
@@ -186,11 +186,11 @@ def handler(event, context):
     database = os.environ["GLUE_DATABASE"]
     results_bucket = os.environ["ANALYTICS_RESULTS_BUCKET"]
     output_location = f"s3://{results_bucket}/query-results/"
-    
+
     # Obtener queries solicitados
     query_params = event.get("queryStringParameters", {}) or {}
     requested_queries = query_params.get("queries", "").split(",")
-    
+
     # Si no se especifica, ejecutar queries principales
     if not requested_queries or requested_queries == [""]:
         requested_queries = [
@@ -200,29 +200,29 @@ def handler(event, context):
             "incidents_by_location",
             "incidents_by_day"
         ]
-    
+
     results = {}
     errors = {}
-    
+
     for query_name in requested_queries:
         query_name = query_name.strip()
         if query_name not in PREDEFINED_QUERIES:
             errors[query_name] = f"Query '{query_name}' no encontrado"
             continue
-        
+
         try:
             query_sql = PREDEFINED_QUERIES[query_name]
             result = execute_athena_query(query_sql, database, output_location)
             results[query_name] = result
         except Exception as e:
             errors[query_name] = str(e)
-    
+
     response_data = {
         "results": results,
         "availableQueries": list(PREDEFINED_QUERIES.keys())
     }
-    
+
     if errors:
         response_data["errors"] = errors
-    
+
     return json_response(200, response_data)

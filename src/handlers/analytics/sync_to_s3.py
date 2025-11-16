@@ -15,6 +15,7 @@ s3_client = boto3.client("s3")
 
 class DecimalEncoder(json.JSONEncoder):
     """Encoder personalizado para Decimal"""
+
     def default(self, obj):
         if isinstance(obj, Decimal):
             return int(obj) if obj % 1 == 0 else float(obj)
@@ -28,11 +29,11 @@ def handler(event, context):
     Sincroniza todos los incidentes de DynamoDB a S3 particionados por fecha
     """
     bucket_name = os.environ["ANALYTICS_DATA_BUCKET"]
-    
+
     try:
         # Obtener todos los incidentes
         incidents = list_all_incidents()
-        
+
         # Agrupar por fecha para particionar
         partitions = {}
         for incident in incidents:
@@ -49,19 +50,19 @@ def handler(event, context):
                 year = now.year
                 month = now.month
                 day = now.day
-            
+
             # Agregar campos de partición al incidente
             incident["year"] = year
             incident["month"] = month
             incident["day"] = day
-            
+
             # Crear clave de partición
             partition_key = f"{year}/{month:02d}/{day:02d}"
             if partition_key not in partitions:
                 partitions[partition_key] = []
-            
+
             partitions[partition_key].append(incident)
-        
+
         # Subir cada partición a S3
         uploaded_count = 0
         for partition_key, partition_incidents in partitions.items():
@@ -70,21 +71,22 @@ def handler(event, context):
                 json.dumps(incident, cls=DecimalEncoder)
                 for incident in partition_incidents
             ])
-            
+
             # Subir a S3
             s3_key = f"incidents/year={partition_key.split('/')[0]}/month={partition_key.split('/')[1]}/day={partition_key.split('/')[2]}/data.json"
-            
+
             s3_client.put_object(
                 Bucket=bucket_name,
                 Key=s3_key,
                 Body=json_lines.encode('utf-8'),
                 ContentType='application/json'
             )
-            
+
             uploaded_count += len(partition_incidents)
-        
-        print(f"Sincronizados {uploaded_count} incidentes en {len(partitions)} particiones")
-        
+
+        print(
+            f"Sincronizados {uploaded_count} incidentes en {len(partitions)} particiones")
+
         return {
             "statusCode": 200,
             "body": json.dumps({
@@ -93,7 +95,7 @@ def handler(event, context):
                 "partitionsCount": len(partitions)
             })
         }
-    
+
     except Exception as e:
         print(f"Error en sincronización: {str(e)}")
         return {

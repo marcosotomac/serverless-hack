@@ -2,15 +2,35 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isAuthenticated, getUser } from "@/lib/auth";
-import { API_BASE_URL } from "@/lib/config";
+import { API_BASE_URL } from "@/lib/api";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Download, BarChart3, TrendingUp, Users, MapPin, AlertCircle, Clock } from "lucide-react";
+import {
+  Download,
+  BarChart3,
+  TrendingUp,
+  Users,
+  MapPin,
+  AlertCircle,
+  Clock,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface AnalyticsData {
@@ -91,7 +111,7 @@ export default function AnalyticsPage() {
       if (response.ok) {
         const data = await response.json();
         setAnalytics(data);
-        
+
         if (data.errors && Object.keys(data.errors).length > 0) {
           console.warn("Errores en algunos queries:", data.errors);
         }
@@ -125,7 +145,7 @@ export default function AnalyticsPage() {
       if (response.ok) {
         const data = await response.json();
         toast.success(`Archivo ${exportFormat.toUpperCase()} generado`);
-        
+
         // Abrir URL de descarga
         if (data.downloadUrl) {
           window.open(data.downloadUrl, "_blank");
@@ -170,14 +190,19 @@ export default function AnalyticsPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">📊 Analíticas de Incidentes</h1>
+            <h1 className="text-3xl font-bold mb-2">
+              📊 Analíticas de Incidentes
+            </h1>
             <p className="text-muted-foreground">
               Panel de análisis y reportes para autoridades
             </p>
           </div>
           <div className="flex gap-3 items-center">
             <ThemeToggle />
-            <Button variant="outline" onClick={() => router.push("/admin/incidents")}>
+            <Button
+              variant="outline"
+              onClick={() => router.push("/admin/incidents")}
+            >
               Volver al Admin
             </Button>
           </div>
@@ -264,8 +289,13 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {byType.map((item) => (
-                    <div key={item.type} className="flex justify-between items-center">
-                      <span className="font-medium capitalize">{item.type}</span>
+                    <div
+                      key={item.type}
+                      className="flex justify-between items-center"
+                    >
+                      <span className="font-medium capitalize">
+                        {item.type}
+                      </span>
                       <Badge variant="secondary">{item.count}</Badge>
                     </div>
                   ))}
@@ -282,7 +312,10 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {byUrgency.map((item) => (
-                    <div key={item.urgency} className="flex justify-between items-center">
+                    <div
+                      key={item.urgency}
+                      className="flex justify-between items-center"
+                    >
                       <span className="font-medium">
                         {URGENCY_LABELS[item.urgency] || item.urgency}
                       </span>
@@ -312,9 +345,14 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {byLocation.map((item, idx) => (
-                    <div key={item.location} className="flex justify-between items-center text-sm">
+                    <div
+                      key={item.location}
+                      className="flex justify-between items-center text-sm"
+                    >
                       <span className="flex items-center gap-2">
-                        <span className="text-muted-foreground">#{idx + 1}</span>
+                        <span className="text-muted-foreground">
+                          #{idx + 1}
+                        </span>
                         <span>{item.location}</span>
                       </span>
                       <Badge variant="outline">{item.count}</Badge>
@@ -333,10 +371,17 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {topReporters.map((item, idx) => (
-                    <div key={item.reportedBy} className="flex justify-between items-center text-sm">
+                    <div
+                      key={item.reportedBy}
+                      className="flex justify-between items-center text-sm"
+                    >
                       <span className="flex items-center gap-2">
-                        <span className="text-muted-foreground">#{idx + 1}</span>
-                        <span className="truncate max-w-[200px]">{item.reportedBy}</span>
+                        <span className="text-muted-foreground">
+                          #{idx + 1}
+                        </span>
+                        <span className="truncate max-w-[200px]">
+                          {item.reportedBy}
+                        </span>
                       </span>
                       <Badge variant="secondary">{item.incidents_count}</Badge>
                     </div>
@@ -360,23 +405,34 @@ export default function AnalyticsPage() {
               <CardContent>
                 <div className="space-y-4">
                   {staffWorkload.map((staff) => (
-                    <div key={staff.assignedTo} className="border rounded-lg p-4">
+                    <div
+                      key={staff.assignedTo}
+                      className="border rounded-lg p-4"
+                    >
                       <div className="flex justify-between items-center mb-3">
-                        <span className="font-semibold">{staff.assignedTo}</span>
+                        <span className="font-semibold">
+                          {staff.assignedTo}
+                        </span>
                         <Badge>{staff.assigned_incidents} total</Badge>
                       </div>
                       <div className="grid grid-cols-3 gap-3 text-sm">
                         <div>
                           <p className="text-muted-foreground">Resueltos</p>
-                          <p className="font-bold text-green-600">{staff.resolved}</p>
+                          <p className="font-bold text-green-600">
+                            {staff.resolved}
+                          </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">En Progreso</p>
-                          <p className="font-bold text-blue-600">{staff.in_progress}</p>
+                          <p className="font-bold text-blue-600">
+                            {staff.in_progress}
+                          </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Pendientes</p>
-                          <p className="font-bold text-yellow-600">{staff.pending}</p>
+                          <p className="font-bold text-yellow-600">
+                            {staff.pending}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -404,8 +460,13 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <div className="space-y-2">
                     {byDay.slice(0, 10).map((item) => (
-                      <div key={item.date} className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">{item.date}</span>
+                      <div
+                        key={item.date}
+                        className="flex justify-between items-center text-sm"
+                      >
+                        <span className="text-muted-foreground">
+                          {item.date}
+                        </span>
                         <Badge variant="outline">{item.count}</Badge>
                       </div>
                     ))}
@@ -424,14 +485,21 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <div className="space-y-3">
                     {significanceTrends.map((item) => (
-                      <div key={item.type} className="border-l-4 border-primary pl-3">
+                      <div
+                        key={item.type}
+                        className="border-l-4 border-primary pl-3"
+                      >
                         <div className="flex justify-between items-center mb-1">
-                          <span className="font-medium capitalize">{item.type}</span>
-                          <Badge variant="secondary">{item.total_incidents}</Badge>
+                          <span className="font-medium capitalize">
+                            {item.type}
+                          </span>
+                          <Badge variant="secondary">
+                            {item.total_incidents}
+                          </Badge>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          Promedio: {item.avg_significance.toFixed(1)} votos | Máximo:{" "}
-                          {item.max_significance}
+                          Promedio: {item.avg_significance.toFixed(1)} votos |
+                          Máximo: {item.max_significance}
                         </div>
                       </div>
                     ))}
