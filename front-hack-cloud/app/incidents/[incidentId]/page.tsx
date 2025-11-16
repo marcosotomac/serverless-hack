@@ -15,6 +15,12 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getAuthHeaders, getUser } from "@/lib/auth";
 import { getMediaUrls } from "@/lib/media";
 import {
@@ -32,6 +38,9 @@ import {
   Image as ImageIcon,
   Video,
   Loader2,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 type IncidentStatus = "pendiente" | "en_atencion" | "resuelto";
@@ -132,6 +141,7 @@ export default function IncidentDetailPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [mediaUrls, setMediaUrls] = useState<Map<string, string>>(new Map());
   const [loadingMedia, setLoadingMedia] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<number | null>(null);
   const user = getUser();
 
   useEffect(() => {
@@ -203,6 +213,16 @@ export default function IncidentDetailPage() {
     setRefreshing(true);
     await Promise.all([fetchIncident(), fetchHistory()]);
     setRefreshing(false);
+  };
+
+  const navigateMedia = (direction: 'prev' | 'next') => {
+    if (!incident?.media || selectedMedia === null) return;
+    
+    if (direction === 'prev') {
+      setSelectedMedia((selectedMedia - 1 + incident.media.length) % incident.media.length);
+    } else {
+      setSelectedMedia((selectedMedia + 1) % incident.media.length);
+    }
   };
 
   const formatDate = (timestamp: number) => {
@@ -432,7 +452,8 @@ export default function IncidentDetailPage() {
                         return (
                           <div
                             key={index}
-                            className="relative group rounded-lg overflow-hidden border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 hover:border-blue-400 dark:hover:border-blue-600 transition-colors"
+                            onClick={() => !isVideo && url && setSelectedMedia(index)}
+                            className={`relative group rounded-lg overflow-hidden border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 hover:border-blue-400 dark:hover:border-blue-600 transition-colors ${!isVideo && url ? 'cursor-pointer' : ''}`}
                           >
                             <div className="aspect-square relative bg-slate-200 dark:bg-slate-800">
                               {url ? (
@@ -445,18 +466,11 @@ export default function IncidentDetailPage() {
                                     Tu navegador no soporta videos.
                                   </video>
                                 ) : (
-                                  <a
-                                    href={url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block w-full h-full"
-                                  >
-                                    <img
-                                      src={url}
-                                      alt={`Imagen ${index + 1}`}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                  </a>
+                                  <img
+                                    src={url}
+                                    alt={`Imagen ${index + 1}`}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
                                 )
                               ) : (
                                 <div className="absolute inset-0 flex items-center justify-center">
@@ -637,6 +651,66 @@ export default function IncidentDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Media Lightbox Dialog */}
+      <Dialog open={selectedMedia !== null} onOpenChange={(open) => !open && setSelectedMedia(null)}>
+        <DialogContent className="max-w-4xl w-full p-0">
+          {selectedMedia !== null && incident?.media && (
+            <div className="relative">
+              {/* Header */}
+              <DialogHeader className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-sm p-4">
+                <DialogTitle className="text-white">
+                  Imagen {selectedMedia + 1} de {incident.media.length}
+                </DialogTitle>
+              </DialogHeader>
+
+              {/* Image */}
+              <div className="relative min-h-[400px] max-h-[80vh] flex items-center justify-center bg-black">
+                {mediaUrls.get(incident.media[selectedMedia]) ? (
+                  <img
+                    src={mediaUrls.get(incident.media[selectedMedia])}
+                    alt={`Imagen ${selectedMedia + 1}`}
+                    className="max-w-full max-h-[80vh] object-contain"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center p-12">
+                    <Loader2 className="w-12 h-12 animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+
+              {/* Navigation Buttons */}
+              {incident.media.length > 1 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigateMedia('prev')}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-12 h-12"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigateMedia('next')}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-12 h-12"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </Button>
+                </>
+              )}
+
+              {/* File Info */}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm p-4 text-white">
+                <p className="text-sm truncate">
+                  {incident.media[selectedMedia].split('/').pop()}
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

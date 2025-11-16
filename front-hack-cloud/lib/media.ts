@@ -8,9 +8,9 @@ const API_BASE_URL =
  */
 export async function getMediaUrl(objectKey: string): Promise<string | null> {
   try {
-    const encodedKey = encodeURIComponent(objectKey);
+    // No codificar la clave completa, el backend espera {objectKey+} que captura todo el path
     const response = await fetch(
-      `${API_BASE_URL}/incidents/media/${encodedKey}`,
+      `${API_BASE_URL}/incidents/media/${objectKey}`,
       {
         headers: getAuthHeaders(),
       }
