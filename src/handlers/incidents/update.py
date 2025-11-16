@@ -6,6 +6,7 @@ from src.common.dynamodb import get_incident, update_incident
 from src.common.incidents import normalize_status
 from src.common.response import json_response
 from src.common.security import AuthError, get_authenticated_claims
+from src.common.websocket import broadcast_to_roles, notify_user
 
 
 def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
@@ -51,5 +52,10 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         attributes["lastNote"] = note
 
     updated_incident = update_incident(incident_id, attributes, history_entry)
+
+    broadcast_to_roles({"personal", "autoridad"}, "incident.updated", {"incident": updated_incident})
+    reporter = updated_incident.get("reportedBy")
+    if reporter:
+        notify_user(reporter, "incident.updated", {"incident": updated_incident})
 
     return json_response(200, {"message": "Incidente actualizado", "incident": updated_incident})

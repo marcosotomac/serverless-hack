@@ -8,6 +8,8 @@ provider:
   runtime: python3.11
   memorySize: 1024
   timeout: 30
+  websocketsApiName: ${self:service}-ws-${sls:stage}
+  websocketsApiRouteSelectionExpression: $request.body.action
   httpApi:
     cors:
       allowedOrigins:
@@ -27,6 +29,16 @@ provider:
     SMTP_HOST: ${opt:smtpHost, env:SMTP_HOST, 'smtp.gmail.com'}
     SMTP_PORT: ${opt:smtpPort, env:SMTP_PORT, '587'}
     INCIDENTS_TABLE: ${self:custom.incidentsTableName}
+    CONNECTIONS_TABLE: ${self:custom.connectionsTableName}
+    WEBSOCKET_API_ENDPOINT:
+      Fn::Join:
+        - ""
+        - - "https://"
+          - Ref: WebsocketsApi
+          - ".execute-api."
+          - ${self:provider.region}
+          - ".amazonaws.com/"
+          - ${self:provider.stage}
   iam:
     role: arn:aws:iam::590953801135:role/LabRole
 
@@ -71,6 +83,21 @@ functions:
       - httpApi:
           method: patch
           path: /incidents/{incidentId}
+  wsConnect:
+    handler: src/handlers/ws/connect.handler
+    description: Registers a WebSocket connection associated to the authenticated user.
+    events:
+      - websocket: $connect
+  wsDisconnect:
+    handler: src/handlers/ws/disconnect.handler
+    description: Cleans up WebSocket connections when clients disconnect.
+    events:
+      - websocket: $disconnect
+  wsDefault:
+    handler: src/handlers/ws/default.handler
+    description: Handles fallback WebSocket messages (pings/unsupported actions).
+    events:
+      - websocket: $default
 
 package:
   patterns:
@@ -80,6 +107,7 @@ package:
 custom:
   usersTableName: ${self:service}-users-${sls:stage}
   incidentsTableName: ${self:service}-incidents-${sls:stage}
+  connectionsTableName: ${self:service}-connections-${sls:stage}
 
 resources:
   Resources:
@@ -111,6 +139,34 @@ resources:
           - IndexName: status-index
             KeySchema:
               - AttributeName: status
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+    ConnectionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.connectionsTableName}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+          - AttributeName: role
+            AttributeType: S
+          - AttributeName: user
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: role-index
+            KeySchema:
+              - AttributeName: role
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: user-index
+            KeySchema:
+              - AttributeName: user
                 KeyType: HASH
             Projection:
               ProjectionType: ALL

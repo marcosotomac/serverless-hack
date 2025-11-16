@@ -1,24 +1,33 @@
 import os
 from functools import lru_cache
 from time import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 import boto3
 from boto3.dynamodb.conditions import Key
 
 
 @lru_cache(maxsize=1)
+def _resource():
+    return boto3.resource("dynamodb")
+
+
+@lru_cache(maxsize=1)
 def _users_table():
     table_name = os.environ["USERS_TABLE"]
-    resource = boto3.resource("dynamodb")
-    return resource.Table(table_name)
+    return _resource().Table(table_name)
 
 
 @lru_cache(maxsize=1)
 def _incidents_table():
     table_name = os.environ["INCIDENTS_TABLE"]
-    resource = boto3.resource("dynamodb")
-    return resource.Table(table_name)
+    return _resource().Table(table_name)
+
+
+@lru_cache(maxsize=1)
+def _connections_table():
+    table_name = os.environ["CONNECTIONS_TABLE"]
+    return _resource().Table(table_name)
 
 
 def put_user(item: Dict[str, Any]) -> None:
@@ -114,3 +123,41 @@ def update_incident(
         update_kwargs["ExpressionAttributeNames"] = attr_names
     response = table.update_item(**update_kwargs)
     return response["Attributes"]
+
+
+def save_connection(connection_id: str, user: str, role: str) -> None:
+    table = _connections_table()
+    table.put_item(
+        Item={
+            "connectionId": connection_id,
+            "user": user,
+            "role": role,
+            "connectedAt": int(time()),
+        }
+    )
+
+
+def delete_connection(connection_id: str) -> None:
+    table = _connections_table()
+    table.delete_item(Key={"connectionId": connection_id})
+
+
+def list_connections_by_roles(roles: Iterable[str]) -> List[Dict[str, Any]]:
+    table = _connections_table()
+    items: List[Dict[str, Any]] = []
+    for role in roles:
+        response = table.query(
+            IndexName="role-index",
+            KeyConditionExpression=Key("role").eq(role),
+        )
+        items.extend(response.get("Items", []))
+    return items
+
+
+def list_connections_by_user(user: str) -> List[Dict[str, Any]]:
+    table = _connections_table()
+    response = table.query(
+        IndexName="user-index",
+        KeyConditionExpression=Key("user").eq(user),
+    )
+    return response.get("Items", [])
