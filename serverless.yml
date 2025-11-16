@@ -234,6 +234,9 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+        TimeToLiveSpecification:
+          AttributeName: expiresAt
+          Enabled: true
     MediaBucket:
       Type: AWS::S3::Bucket
       Properties:
@@ -249,6 +252,3 @@ resources:
           BlockPublicPolicy: true
           IgnorePublicAcls: true
           RestrictPublicBuckets: true
-        TimeToLiveSpecification:
-          AttributeName: expiresAt
-          Enabled: true
