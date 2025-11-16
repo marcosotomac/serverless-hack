@@ -147,6 +147,7 @@ const ACTION_LABELS: Record<string, string> = {
   CLOSED: "Cerrado",
   COMMENT: "Comentario agregado",
   SIGNIFICANCE_UPVOTE: "Voto de relevancia",
+  ASSIGNMENT: "Asignado",
 };
 
 export default function IncidentDetailPage() {
@@ -640,7 +641,8 @@ export default function IncidentDetailPage() {
                       Relevancia del Incidente
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      Marca este incidente como importante para priorizar su atención
+                      Marca este incidente como importante para priorizar su
+                      atención
                     </CardDescription>
                   </div>
                   <div className="flex flex-col items-center gap-2">
@@ -648,7 +650,9 @@ export default function IncidentDetailPage() {
                       {incident.significanceCount || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {(incident.significanceCount || 0) === 1 ? "voto" : "votos"}
+                      {(incident.significanceCount || 0) === 1
+                        ? "voto"
+                        : "votos"}
                     </p>
                   </div>
                 </div>
@@ -658,7 +662,8 @@ export default function IncidentDetailPage() {
                   onClick={handleVoteSignificance}
                   disabled={
                     votingSignificance ||
-                    (incident.significanceVoters?.includes(user?.email || "") ?? false)
+                    (incident.significanceVoters?.includes(user?.email || "") ??
+                      false)
                   }
                   className="w-full gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
                 >
@@ -667,7 +672,9 @@ export default function IncidentDetailPage() {
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Registrando...
                     </>
-                  ) : incident.significanceVoters?.includes(user?.email || "") ? (
+                  ) : incident.significanceVoters?.includes(
+                      user?.email || ""
+                    ) ? (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
                       Ya votaste
@@ -775,7 +782,9 @@ export default function IncidentDetailPage() {
                     <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-30" />
                     <p>No hay comentarios aún</p>
                     {user?.role === "estudiante" && (
-                      <p className="text-sm mt-1">¡Sé el primero en comentar!</p>
+                      <p className="text-sm mt-1">
+                        ¡Sé el primero en comentar!
+                      </p>
                     )}
                   </div>
                 )}

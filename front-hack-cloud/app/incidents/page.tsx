@@ -483,7 +483,10 @@ export default function IncidentsPage() {
                               </Badge>
                               {(incident.significanceCount ?? 0) > 0 && (
                                 <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 gap-1">
-                                  🔥 {incident.significanceCount} {incident.significanceCount === 1 ? "voto" : "votos"}
+                                  🔥 {incident.significanceCount}{" "}
+                                  {incident.significanceCount === 1
+                                    ? "voto"
+                                    : "votos"}
                                 </Badge>
                               )}
                             </div>

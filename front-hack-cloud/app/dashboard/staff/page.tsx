@@ -143,7 +143,10 @@ export default function StaffDashboard() {
     return () => unsubscribe();
   }, [subscribe, fetchIncidents]);
 
-  const handleStatusChange = async (incidentId: string, newStatus: IncidentStatus) => {
+  const handleStatusChange = async (
+    incidentId: string,
+    newStatus: IncidentStatus
+  ) => {
     setUpdatingStatus(incidentId);
     try {
       const response = await fetch(
@@ -174,10 +177,14 @@ export default function StaffDashboard() {
     router.push("/");
   };
 
-  const myIncidents = incidents.filter(i => i.assignedTo === user?.email);
-  const pendingIncidents = incidents.filter(i => i.status === "pendiente" && !i.assignedTo);
-  const inProgressIncidents = myIncidents.filter(i => i.status === "en_atencion");
-  const resolvedIncidents = myIncidents.filter(i => i.status === "resuelto");
+  const myIncidents = incidents.filter((i) => i.assignedTo === user?.email);
+  const pendingIncidents = incidents.filter(
+    (i) => i.status === "pendiente" && !i.assignedTo
+  );
+  const inProgressIncidents = myIncidents.filter(
+    (i) => i.status === "en_atencion"
+  );
+  const resolvedIncidents = myIncidents.filter((i) => i.status === "resuelto");
 
   const stats = {
     assigned: myIncidents.length,
@@ -231,7 +238,7 @@ export default function StaffDashboard() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm line-clamp-2">{incident.description}</p>
-          
+
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -241,11 +248,16 @@ export default function StaffDashboard() {
             >
               Ver Detalles
             </Button>
-            
+
             {incident.assignedTo === user?.email && (
               <Select
                 value={incident.status}
-                onValueChange={(value) => handleStatusChange(incident.incidentId, value as IncidentStatus)}
+                onValueChange={(value) =>
+                  handleStatusChange(
+                    incident.incidentId,
+                    value as IncidentStatus
+                  )
+                }
                 disabled={updatingStatus === incident.incidentId}
               >
                 <SelectTrigger className="flex-1">

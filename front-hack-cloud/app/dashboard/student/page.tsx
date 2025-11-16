@@ -116,7 +116,10 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const unsubscribe = subscribe((message) => {
-      if (message.type === "incident.created" || message.type === "incident.updated") {
+      if (
+        message.type === "incident.created" ||
+        message.type === "incident.updated"
+      ) {
         fetchIncidents();
         toast.success("Se actualizó un incidente");
       }
@@ -218,8 +221,10 @@ export default function StudentDashboard() {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card className="border-2 border-blue-200 dark:border-blue-800 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push("/incidents/new")}>
+          <Card
+            className="border-2 border-blue-200 dark:border-blue-800 hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => router.push("/incidents/new")}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-blue-600">
                 <Plus className="w-5 h-5" />
@@ -231,8 +236,10 @@ export default function StudentDashboard() {
             </CardHeader>
           </Card>
 
-          <Card className="border-2 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push("/incidents")}>
+          <Card
+            className="border-2 hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => router.push("/incidents")}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
@@ -250,9 +257,7 @@ export default function StudentDashboard() {
                 <MessageSquare className="w-5 h-5" />
                 Ayuda y Soporte
               </CardTitle>
-              <CardDescription>
-                ¿Necesitas ayuda? Contáctanos
-              </CardDescription>
+              <CardDescription>¿Necesitas ayuda? Contáctanos</CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -287,13 +292,16 @@ export default function StudentDashboard() {
                     <div
                       key={incident.incidentId}
                       className="p-4 rounded-lg border hover:border-blue-400 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/incidents/${incident.incidentId}`)}
+                      onClick={() =>
+                        router.push(`/incidents/${incident.incidentId}`)
+                      }
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="font-semibold">
-                              {incident.type.charAt(0).toUpperCase() + incident.type.slice(1)}
+                              {incident.type.charAt(0).toUpperCase() +
+                                incident.type.slice(1)}
                             </h3>
                             <Badge className={statusConfig.color}>
                               <StatusIcon className="w-3 h-3 mr-1" />
@@ -316,7 +324,10 @@ export default function StudentDashboard() {
                             {incident.description}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {incident.location} • {new Date(incident.createdAt * 1000).toLocaleDateString()}
+                            {incident.location} •{" "}
+                            {new Date(
+                              incident.createdAt * 1000
+                            ).toLocaleDateString()}
                           </p>
                         </div>
                       </div>

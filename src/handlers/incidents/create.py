@@ -63,6 +63,7 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         "updatedAt": timestamp,
         "history": [history_entry],
         "significanceCount": 0,
+        "assignedTo": None,  # Inicialmente sin asignar
     }
     if media_keys:
         incident_item["media"] = media_keys

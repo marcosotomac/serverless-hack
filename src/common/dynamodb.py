@@ -111,7 +111,8 @@ def update_incident(
         set_parts.append(f"{placeholder_name} = {placeholder_value}")
 
     set_parts.append("updatedAt = :ts")
-    set_parts.append("history = list_append(if_not_exists(history, :emptyList), :historyEntry)")
+    set_parts.append(
+        "history = list_append(if_not_exists(history, :emptyList), :historyEntry)")
 
     update_expression = "SET " + ", ".join(set_parts)
     update_kwargs = {
@@ -214,19 +215,20 @@ def add_significance_vote(
 ) -> Dict[str, Any]:
     table = _incidents_table()
     now = int(time())
-    
+
     # Primero obtenemos el incidente para verificar si ya votó
     incident = get_incident(incident_id)
     if not incident:
         raise ValueError("Incidente no encontrado")
-    
+
     # Verificar si el usuario ya votó
     voters = incident.get("significanceVoters", set())
     if isinstance(voters, list):
         voters = set(voters)
     if voter in voters:
-        raise ValueError("El usuario ya marcó este incidente como significativo")
-    
+        raise ValueError(
+            "El usuario ya marcó este incidente como significativo")
+
     try:
         response = table.update_item(
             Key={"incidentId": incident_id},
@@ -250,3 +252,16 @@ def add_significance_vote(
         if exc.response["Error"]["Code"] == "ConditionalCheckFailedException":
             raise ValueError("Incidente no encontrado") from exc
         raise
+
+
+def list_users_by_role(role: str) -> List[Dict[str, Any]]:
+    """
+    Lista todos los usuarios con un rol específico
+    """
+    table = _users_table()
+    response = table.scan(
+        FilterExpression="attribute_exists(#role) AND #role = :role",
+        ExpressionAttributeNames={"#role": "role"},
+        ExpressionAttributeValues={":role": role}
+    )
+    return response.get("Items", [])

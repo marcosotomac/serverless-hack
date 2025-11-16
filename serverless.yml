@@ -156,6 +156,22 @@ functions:
       - httpApi:
           method: post
           path: /incidents/{incidentId}/significance
+  assignIncident:
+    handler: src/handlers/incidents/assign.handler
+    description: Asigna un incidente a un miembro del personal (solo autoridades).
+    timeout: 10
+    events:
+      - httpApi:
+          method: patch
+          path: /incidents/{incidentId}/assign
+  listStaff:
+    handler: src/handlers/incidents/list_staff.handler
+    description: Lista todos los usuarios con rol 'personal' (solo autoridades).
+    timeout: 10
+    events:
+      - httpApi:
+          method: get
+          path: /staff
   predictIncidents:
     handler: src/handlers/analytics/predict.handler
     description: Consulta SageMaker para identificar patrones y predicciones de riesgos.

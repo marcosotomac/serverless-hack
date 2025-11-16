@@ -14,7 +14,7 @@ export default function DashboardPage() {
     }
 
     const user = getUser();
-    
+
     // Redirect based on role
     switch (user?.role) {
       case "estudiante":
