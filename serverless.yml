@@ -1,0 +1,75 @@
+service: alertautec-auth
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  runtime: python3.11
+  httpApi:
+    cors:
+      allowedOrigins:
+        - "*"
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+      allowedMethods:
+        - OPTIONS
+        - POST
+  environment:
+    USERS_TABLE: ${self:custom.usersTableName}
+    AUTH_SECRET: ${opt:authSecret, env:AUTH_SECRET, 'dev-secret'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:Scan
+          Resource:
+            - Fn::GetAtt:
+                - UsersTable
+                - Arn
+
+functions:
+  register:
+    handler: src/handlers/auth/register.handler
+    description: Registers an institutional user and stores hashed credentials.
+    timeout: 10
+    events:
+      - httpApi:
+          method: post
+          path: /auth/register
+  login:
+    handler: src/handlers/auth/login.handler
+    description: Authenticates a user with institutional credentials and issues a session token.
+    timeout: 10
+    events:
+      - httpApi:
+          method: post
+          path: /auth/login
+
+package:
+  patterns:
+    - "!node_modules/**"
+    - "!venv/**"
+
+custom:
+  usersTableName: ${self:service}-users-${sls:stage}
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.usersTableName}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
