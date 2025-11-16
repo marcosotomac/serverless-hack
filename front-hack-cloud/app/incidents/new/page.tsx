@@ -17,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getAuthHeaders } from "@/lib/auth";
+import { toast } from "sonner";
 import {
   AlertCircle,
   CheckCircle2,
@@ -26,6 +27,11 @@ import {
   FileText,
   Zap,
   ArrowLeft,
+  Image as ImageIcon,
+  Video,
+  Upload,
+  Loader2,
+  Trash2,
 } from "lucide-react";
 
 type UrgencyLevel = "baja" | "media" | "alta" | "critica";
@@ -36,6 +42,15 @@ type IncidentType =
   | "seguridad"
   | "tecnologia"
   | "otros";
+
+interface MediaFile {
+  file: File;
+  preview: string;
+  uploading: boolean;
+  uploaded: boolean;
+  key?: string;
+  error?: string;
+}
 
 const URGENCY_CONFIG = {
   baja: {
@@ -109,6 +124,7 @@ export default function NewIncidentPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
 
   const [formData, setFormData] = useState({
     type: "" as IncidentType | "",
@@ -118,12 +134,138 @@ export default function NewIncidentPage() {
     note: "",
   });
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // Validar tipo de archivo
+    const validFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      
+      if (!isImage && !isVideo) {
+        toast.error(`${file.name} no es una imagen o video válido`);
+        return false;
+      }
+      
+      // Validar tamaño (max 50MB)
+      const maxSize = 50 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error(`${file.name} es demasiado grande (máx 50MB)`);
+        return false;
+      }
+      
+      return true;
+    });
+
+    // Crear previsualizaciones
+    const newMediaFiles: MediaFile[] = validFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      uploading: false,
+      uploaded: false,
+    }));
+
+    setMediaFiles(prev => [...prev, ...newMediaFiles]);
+    
+    // Limpiar input
+    e.target.value = '';
+  };
+
+  const removeMediaFile = (index: number) => {
+    setMediaFiles(prev => {
+      const file = prev[index];
+      URL.revokeObjectURL(file.preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const uploadMediaFile = async (mediaFile: MediaFile, index: number): Promise<string | null> => {
+    try {
+      // Actualizar estado a "subiendo"
+      setMediaFiles(prev => prev.map((f, i) => 
+        i === index ? { ...f, uploading: true, error: undefined } : f
+      ));
+
+      // 1. Solicitar URL de carga
+      const uploadResponse = await fetch(
+        "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents/media/upload",
+        {
+          method: "POST",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contentType: mediaFile.file.type,
+            fileName: mediaFile.file.name,
+          }),
+        }
+      );
+
+      if (!uploadResponse.ok) {
+        throw new Error("Error al solicitar URL de carga");
+      }
+
+      const uploadData = await uploadResponse.json();
+      const { uploadUrl, objectKey } = uploadData;
+
+      // 2. Subir archivo a S3
+      const s3Response = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": mediaFile.file.type,
+        },
+        body: mediaFile.file,
+      });
+
+      if (!s3Response.ok) {
+        throw new Error("Error al subir el archivo");
+      }
+
+      // Actualizar estado a "subido"
+      setMediaFiles(prev => prev.map((f, i) => 
+        i === index ? { ...f, uploading: false, uploaded: true, key: objectKey } : f
+      ));
+
+      return objectKey;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Error al subir archivo";
+      
+      // Actualizar estado a "error"
+      setMediaFiles(prev => prev.map((f, i) => 
+        i === index ? { ...f, uploading: false, error: errorMessage } : f
+      ));
+      
+      toast.error(`Error al subir ${mediaFile.file.name}`);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
+      // 1. Subir archivos multimedia primero
+      const mediaKeys: string[] = [];
+      
+      for (let i = 0; i < mediaFiles.length; i++) {
+        const mediaFile = mediaFiles[i];
+        
+        if (mediaFile.uploaded && mediaFile.key) {
+          // Ya está subido
+          mediaKeys.push(mediaFile.key);
+        } else if (!mediaFile.uploading && !mediaFile.error) {
+          // Necesita subirse
+          const key = await uploadMediaFile(mediaFile, i);
+          if (key) {
+            mediaKeys.push(key);
+          }
+        }
+      }
+
+      // 2. Crear el incidente con las claves de los archivos
       const response = await fetch(
         "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents",
         {
@@ -132,13 +274,17 @@ export default function NewIncidentPage() {
             ...getAuthHeaders(),
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            ...formData,
+            mediaKeys,
+          }),
         }
       );
 
       const data = await response.json();
 
       if (response.ok) {
+        toast.success("Incidente reportado exitosamente");
         router.push("/incidents");
       } else {
         setError(data.message || "Error al crear el incidente");
@@ -359,6 +505,144 @@ export default function NewIncidentPage() {
             </CardContent>
           </Card>
 
+          {/* Media Upload Card */}
+          <Card className="border-2 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="w-5 h-5 text-green-600" />
+                Archivos Multimedia (Opcional)
+              </CardTitle>
+              <CardDescription>
+                Adjunta fotos o videos del incidente (máx 50MB por archivo)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Upload Button */}
+              <div className="flex items-center justify-center w-full">
+                <label
+                  htmlFor="media-upload"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-2 text-slate-500" />
+                    <p className="mb-2 text-sm text-slate-500">
+                      <span className="font-semibold">Click para subir</span> o
+                      arrastra archivos
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Imágenes o videos (máx 50MB)
+                    </p>
+                  </div>
+                  <input
+                    id="media-upload"
+                    type="file"
+                    className="hidden"
+                    accept="image/*,video/*"
+                    multiple
+                    onChange={handleFileSelect}
+                    disabled={loading}
+                  />
+                </label>
+              </div>
+
+              {/* Media Files Preview */}
+              {mediaFiles.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">
+                      Archivos ({mediaFiles.length})
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        mediaFiles.forEach(f => URL.revokeObjectURL(f.preview));
+                        setMediaFiles([]);
+                      }}
+                      disabled={loading}
+                      className="text-xs"
+                    >
+                      Limpiar todo
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {mediaFiles.map((mediaFile, index) => {
+                      const isVideo = mediaFile.file.type.startsWith('video/');
+                      
+                      return (
+                        <div
+                          key={index}
+                          className="relative group rounded-lg overflow-hidden border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+                        >
+                          {/* Preview */}
+                          <div className="aspect-square relative bg-slate-200 dark:bg-slate-800">
+                            {isVideo ? (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Video className="w-12 h-12 text-slate-400" />
+                              </div>
+                            ) : (
+                              <img
+                                src={mediaFile.preview}
+                                alt={mediaFile.file.name}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
+                            
+                            {/* Status Overlay */}
+                            {mediaFile.uploading && (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <Loader2 className="w-8 h-8 text-white animate-spin" />
+                              </div>
+                            )}
+                            
+                            {mediaFile.uploaded && (
+                              <div className="absolute top-2 right-2">
+                                <Badge className="bg-green-500 text-white border-0">
+                                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                                  Subido
+                                </Badge>
+                              </div>
+                            )}
+                            
+                            {mediaFile.error && (
+                              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center p-2">
+                                <p className="text-xs text-red-600 dark:text-red-400 text-center font-medium">
+                                  {mediaFile.error}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* File Info */}
+                          <div className="p-2 bg-white dark:bg-slate-950">
+                            <p className="text-xs truncate font-medium">
+                              {mediaFile.file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {(mediaFile.file.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+
+                          {/* Remove Button */}
+                          <button
+                            type="button"
+                            onClick={() => removeMediaFile(index)}
+                            disabled={loading || mediaFile.uploading}
+                            className="absolute top-2 left-2 p-1.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Separator />
 
           {/* Error Message */}
@@ -384,10 +668,17 @@ export default function NewIncidentPage() {
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.type}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              disabled={loading || !formData.type || mediaFiles.some(f => f.uploading)}
+              className="flex-1 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
-              {loading ? "Creando..." : "Crear Reporte"}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {mediaFiles.some(f => f.uploading) ? "Subiendo archivos..." : "Creando..."}
+                </>
+              ) : (
+                "Crear Reporte"
+              )}
             </Button>
           </div>
         </form>

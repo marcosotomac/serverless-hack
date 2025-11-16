@@ -141,6 +141,14 @@ functions:
       - httpApi:
           method: post
           path: /incidents/media/upload
+  getMediaUrl:
+    handler: src/handlers/incidents/get_media_url.handler
+    description: Genera URLs firmadas de lectura para archivos multimedia de incidentes.
+    timeout: 10
+    events:
+      - httpApi:
+          method: get
+          path: /incidents/media/{objectKey+}
   wsConnect:
     handler: src/handlers/ws/connect.handler
     description: Registers a WebSocket connection associated to the authenticated user.

@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAuthHeaders, getUser } from "@/lib/auth";
+import { getMediaUrls } from "@/lib/media";
 import {
   ArrowLeft,
   MapPin,
@@ -28,6 +29,9 @@ import {
   FileText,
   History as HistoryIcon,
   RefreshCw,
+  Image as ImageIcon,
+  Video,
+  Loader2,
 } from "lucide-react";
 
 type IncidentStatus = "pendiente" | "en_atencion" | "resuelto";
@@ -47,6 +51,7 @@ interface Incident {
   updatedAt: number;
   lastNote?: string;
   history?: HistoryEntry[];
+  media?: string[];
 }
 
 interface HistoryEntry {
@@ -125,6 +130,8 @@ export default function IncidentDetailPage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [mediaUrls, setMediaUrls] = useState<Map<string, string>>(new Map());
+  const [loadingMedia, setLoadingMedia] = useState(false);
   const user = getUser();
 
   useEffect(() => {
@@ -133,6 +140,25 @@ export default function IncidentDetailPage() {
       fetchHistory();
     }
   }, [incidentId]);
+
+  useEffect(() => {
+    // Cargar URLs de medios cuando se carga el incidente
+    if (incident?.media && incident.media.length > 0) {
+      loadMediaUrls(incident.media);
+    }
+  }, [incident?.media]);
+
+  const loadMediaUrls = async (mediaKeys: string[]) => {
+    setLoadingMedia(true);
+    try {
+      const urls = await getMediaUrls(mediaKeys);
+      setMediaUrls(urls);
+    } catch (error) {
+      console.error("Error loading media URLs:", error);
+    } finally {
+      setLoadingMedia(false);
+    }
+  };
 
   const fetchIncident = async () => {
     try {
@@ -373,6 +399,107 @@ export default function IncidentDetailPage() {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Media Gallery Card */}
+            {incident.media && incident.media.length > 0 && (
+              <Card className="border-2 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5 text-purple-600" />
+                    Archivos Multimedia ({incident.media.length})
+                  </CardTitle>
+                  <CardDescription>
+                    Fotos y videos adjuntos al incidente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingMedia ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                      <span className="ml-2 text-muted-foreground">
+                        Cargando multimedia...
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {incident.media.map((mediaKey, index) => {
+                        const url = mediaUrls.get(mediaKey);
+                        const isVideo = mediaKey.includes('.mp4') || 
+                                       mediaKey.includes('.mov') || 
+                                       mediaKey.includes('.mkv') ||
+                                       mediaKey.includes('video/');
+                        
+                        return (
+                          <div
+                            key={index}
+                            className="relative group rounded-lg overflow-hidden border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 hover:border-blue-400 dark:hover:border-blue-600 transition-colors"
+                          >
+                            <div className="aspect-square relative bg-slate-200 dark:bg-slate-800">
+                              {url ? (
+                                isVideo ? (
+                                  <video
+                                    src={url}
+                                    controls
+                                    className="w-full h-full object-cover"
+                                  >
+                                    Tu navegador no soporta videos.
+                                  </video>
+                                ) : (
+                                  <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block w-full h-full"
+                                  >
+                                    <img
+                                      src={url}
+                                      alt={`Imagen ${index + 1}`}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                  </a>
+                                )
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  {isVideo ? (
+                                    <Video className="w-12 h-12 text-slate-400" />
+                                  ) : (
+                                    <ImageIcon className="w-12 h-12 text-slate-400" />
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* Type Badge */}
+                              <div className="absolute top-2 right-2">
+                                <Badge className={isVideo ? "bg-purple-500" : "bg-blue-500"}>
+                                  {isVideo ? (
+                                    <>
+                                      <Video className="w-3 h-3 mr-1" />
+                                      Video
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ImageIcon className="w-3 h-3 mr-1" />
+                                      Imagen
+                                    </>
+                                  )}
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            {/* File name */}
+                            <div className="p-2 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+                              <p className="text-xs truncate text-muted-foreground">
+                                {mediaKey.split('/').pop() || `Archivo ${index + 1}`}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Last Note Card */}
             {incident.lastNote && (
