@@ -110,12 +110,16 @@ export default function AnalyticsPage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("Analytics data received:", data);
         setAnalytics(data);
 
         if (data.errors && Object.keys(data.errors).length > 0) {
           console.warn("Errores en algunos queries:", data.errors);
+          toast.error("Algunos datos de analíticas no están disponibles. Verifica la configuración de Athena.");
         }
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Error response:", errorData);
         toast.error("Error al cargar analíticas");
       }
     } catch (error) {
@@ -183,6 +187,11 @@ export default function AnalyticsPage() {
   const significanceTrends = analytics?.results.significance_trends || [];
 
   const totalIncidents = byStatus.reduce((sum, item) => sum + item.count, 0);
+  
+  // Verificar si hay errores en todos los queries
+  const allQueriesFailed = analytics?.errors && 
+    Object.keys(analytics.errors).length === 8 &&
+    totalIncidents === 0;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -207,6 +216,36 @@ export default function AnalyticsPage() {
             </Button>
           </div>
         </div>
+
+        {/* Mensaje de error si todos los queries fallaron */}
+        {allQueriesFailed && (
+          <Card className="mb-8 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+            <CardHeader>
+              <CardTitle className="text-yellow-800 dark:text-yellow-200">
+                ⚠️ Datos de Analíticas No Disponibles
+              </CardTitle>
+              <CardDescription className="text-yellow-700 dark:text-yellow-300">
+                Los datos de analíticas no están disponibles porque la tabla de Athena/Glue 
+                necesita ser reconfigurada. Esto se debe a un problema con las columnas de partición.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm text-yellow-700 dark:text-yellow-300">
+                <p><strong>Pasos para solucionar:</strong></p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Ir a AWS Glue Console</li>
+                  <li>Buscar la base de datos: <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">alertautec-auth_analytics_db_dev</code></li>
+                  <li>Eliminar la tabla: <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">incidents</code></li>
+                  <li>Ejecutar: <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">serverless deploy</code> para recrearla</li>
+                  <li>Ejecutar el sync manual o esperar la próxima hora para que se sincronicen los datos</li>
+                </ol>
+                <p className="mt-4">
+                  <strong>Mientras tanto, puedes usar la exportación de reportes que no depende de Athena.</strong>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Exportación */}
         <Card className="mb-8">
