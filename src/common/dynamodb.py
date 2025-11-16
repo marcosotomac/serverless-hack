@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import boto3
 from boto3.dynamodb.conditions import Key
+from botocore.exceptions import ClientError
 
 
 @lru_cache(maxsize=1)
@@ -178,3 +179,62 @@ def list_connections_by_user(user: str) -> List[Dict[str, Any]]:
         KeyConditionExpression=Key("user").eq(user),
     )
     return response.get("Items", [])
+
+
+def add_incident_comment(
+    incident_id: str,
+    comment_entry: Dict[str, Any],
+    history_entry: Dict[str, Any],
+) -> Dict[str, Any]:
+    table = _incidents_table()
+    now = int(time())
+    response = table.update_item(
+        Key={"incidentId": incident_id},
+        UpdateExpression=(
+            "SET comments = list_append(if_not_exists(comments, :emptyList), :commentList), "
+            "updatedAt = :ts, "
+            "history = list_append(if_not_exists(history, :emptyList), :historyEntry)"
+        ),
+        ExpressionAttributeValues={
+            ":commentList": [comment_entry],
+            ":historyEntry": [history_entry],
+            ":emptyList": [],
+            ":ts": now,
+        },
+        ConditionExpression="attribute_exists(incidentId)",
+        ReturnValues="ALL_NEW",
+    )
+    return response["Attributes"]
+
+
+def add_significance_vote(
+    incident_id: str,
+    voter: str,
+    history_entry: Dict[str, Any],
+) -> Dict[str, Any]:
+    table = _incidents_table()
+    now = int(time())
+    try:
+        response = table.update_item(
+            Key={"incidentId": incident_id},
+            UpdateExpression=(
+                "SET updatedAt = :ts, "
+                "history = list_append(if_not_exists(history, :emptyList), :historyEntry) "
+                "ADD significanceCount :one, significanceVoters :voterSet"
+            ),
+            ExpressionAttributeValues={
+                ":ts": now,
+                ":historyEntry": [history_entry],
+                ":emptyList": [],
+                ":one": 1,
+                ":voterSet": {voter},
+                ":voter": voter,
+            },
+            ConditionExpression="attribute_not_exists(significanceVoters) OR attribute_not_contains(significanceVoters, :voter)",
+            ReturnValues="ALL_NEW",
+        )
+        return response["Attributes"]
+    except ClientError as exc:
+        if exc.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            raise ValueError("El usuario ya marcó este incidente como significativo") from exc
+        raise

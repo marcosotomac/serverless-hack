@@ -44,16 +44,23 @@ Arquitectura de Referencia
 Módulos Principales
 -------------------
 
-### Autenticación
-* `POST /auth/register` y `POST /auth/login`.
-* Valida correos `@utec.edu.pe`, aplica hashing PBKDF2 y genera tokens HS256.
-* Roles soportados: `estudiante`, `personal`, `autoridad`.
+### Autenticación y Roles
+* Perfiles oficiales:
+  - **Usuario (estudiante)**: único rol autorizado a crear incidentes y añadir comentarios para dar contexto.
+  - **Personal**: equipo operativo asignado por tipo de incidente; puede actualizar estados y resolver tareas.
+  - **Autoridad**: control total; asigna incidentes al personal, ajusta prioridades y supervisa cierres.
+* `POST /auth/register` y `POST /auth/login` validan correos `@utec.edu.pe`, aplican hashing PBKDF2 y emiten tokens HS256.
 
 ### Gestión de Incidentes
-* Registro con tipo, ubicación, descripción, urgencia, notas y `mediaKeys`.
-* Panel administrativo (`/admin/incidents`) con filtros por estado/urgencia/prioridad, métricas agregadas y ordenamiento por criticidad.
-* Endpoints para actualizar estado (`/incidents/{id}`), priorizar (`/incidents/{id}/priority`) y cerrar (`/incidents/{id}/close`).
-* Historial completo (`/incidents/{id}/history`) con responsable, acción, notas y timestamp.
+* Creación (solo usuarios) con tipo, ubicación, descripción, urgencia, comentarios iniciales y `mediaKeys`.
+* Panel administrativo (`/admin/incidents`) permite a las autoridades filtrar por estado/urgencia/prioridad, revisar métricas y ordenar por relevancia o “significancia”.
+* Endpoints operativos:
+  - `/incidents/{id}`: personal/autoridad cambian estado (pendiente, en_atencion, resuelto).
+  - `/incidents/{id}/priority`: autoridades ajustan prioridad estratégica.
+  - `/incidents/{id}/close`: personal o autoridad marcan como resuelto y documentan la solución asignada.
+* Historial completo (`/incidents/{id}/history`) con responsable, acción, notas, comentarios y timestamps.
+* Comentarios: cualquier usuario involucrado puede sumar contextos o actualizaciones textuales adjuntas en el historial.
+* Botón de significancia: los usuarios pueden incrementar la relevancia de un incidente; el contador se refleja en el panel para priorizar atención.
 
 ### Evidencia Multimedia
 * `POST /incidents/media/upload` genera URL prefirmada (PUT) y `objectKey`.
@@ -87,6 +94,8 @@ Catálogo de Endpoints
 | PATCH | `/incidents/{incidentId}/priority` | Autoridad | Ajusta prioridad (baja, media, alta, critica) |
 | PATCH | `/incidents/{incidentId}/close` | Personal / Autoridad | Marca como resuelto y registra `closedAt` |
 | GET | `/incidents/{incidentId}/history` | Autenticado | Devuelve historial completo del incidente |
+| POST | `/incidents/{incidentId}/comments` | Usuario | Agrega comentario contextual al incidente |
+| POST | `/incidents/{incidentId}/significance` | Autenticado | Incrementa la relevancia (un voto por usuario) |
 | POST | `/incidents/media/upload` | Autenticado | URL prefirmada para subir imágenes/videos |
 | POST | `/analytics/predictions` | Personal / Autoridad | Predice patrones y hotspots |
 

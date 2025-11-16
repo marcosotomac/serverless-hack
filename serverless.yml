@@ -260,3 +260,19 @@ resources:
           BlockPublicPolicy: true
           IgnorePublicAcls: true
           RestrictPublicBuckets: true
+  commentIncident:
+    handler: src/handlers/incidents/comment.handler
+    description: Permite a usuarios dejar comentarios en un incidente.
+    timeout: 10
+    events:
+      - httpApi:
+          method: post
+          path: /incidents/{incidentId}/comments
+  voteSignificance:
+    handler: src/handlers/incidents/significance.handler
+    description: Incrementa la relevancia (significancia) de un incidente.
+    timeout: 10
+    events:
+      - httpApi:
+          method: post
+          path: /incidents/{incidentId}/significance

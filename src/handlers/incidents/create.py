@@ -16,6 +16,9 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
     except AuthError as exc:
         return json_response(401, {"message": str(exc)})
 
+    if claims.get("role") != "estudiante":
+        return json_response(403, {"message": "Solo los usuarios pueden registrar incidentes"})
+
     try:
         payload = json.loads(event.get("body") or "{}")
     except json.JSONDecodeError:
@@ -59,8 +62,10 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         "createdAt": timestamp,
         "updatedAt": timestamp,
         "history": [history_entry],
-        "media": media_keys,
+        "significanceCount": 0,
     }
+    if media_keys:
+        incident_item["media"] = media_keys
     if note:
         incident_item["lastNote"] = note
     put_incident(incident_item)
