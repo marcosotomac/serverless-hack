@@ -63,6 +63,7 @@ interface Incident {
   createdAt: number;
   updatedAt: number;
   lastNote?: string;
+  significanceCount?: number;
 }
 
 const STATUS_CONFIG = {
@@ -589,6 +590,16 @@ export default function AdminIncidentsPage() {
                                   P:{priorityConfig.label.charAt(0)}
                                 </span>
                               </Badge>
+                              {(incident.significanceCount ?? 0) > 0 && (
+                                <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 text-xs gap-1">
+                                  <span className="hidden xs:inline">
+                                    🔥 {incident.significanceCount} {incident.significanceCount === 1 ? "voto" : "votos"}
+                                  </span>
+                                  <span className="xs:hidden">
+                                    🔥 {incident.significanceCount}
+                                  </span>
+                                </Badge>
+                              )}
                             </div>
 
                             <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">

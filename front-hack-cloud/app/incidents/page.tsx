@@ -48,6 +48,7 @@ interface Incident {
   createdAt: number;
   updatedAt: number;
   lastNote?: string;
+  significanceCount?: number;
 }
 
 const STATUS_CONFIG = {
@@ -480,6 +481,11 @@ export default function IncidentsPage() {
                               <Badge className={urgencyConfig.color}>
                                 {urgencyConfig.label}
                               </Badge>
+                              {(incident.significanceCount ?? 0) > 0 && (
+                                <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 gap-1">
+                                  🔥 {incident.significanceCount} {incident.significanceCount === 1 ? "voto" : "votos"}
+                                </Badge>
+                              )}
                             </div>
 
                             <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">

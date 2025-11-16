@@ -21,8 +21,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { getAuthHeaders, getUser } from "@/lib/auth";
 import { getMediaUrls } from "@/lib/media";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   MapPin,
@@ -41,6 +43,9 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  MessageSquare,
+  ThumbsUp,
+  Send,
 } from "lucide-react";
 
 type IncidentStatus = "pendiente" | "en_atencion" | "resuelto";
@@ -61,6 +66,17 @@ interface Incident {
   lastNote?: string;
   history?: HistoryEntry[];
   media?: string[];
+  comments?: CommentEntry[];
+  significanceCount?: number;
+  significanceVoters?: string[];
+}
+
+interface CommentEntry {
+  commentId: string;
+  text: string;
+  by: string;
+  role: string;
+  timestamp: number;
 }
 
 interface HistoryEntry {
@@ -129,6 +145,8 @@ const ACTION_LABELS: Record<string, string> = {
   STATUS_CHANGE: "Cambio de estado",
   PRIORITY_CHANGE: "Cambio de prioridad",
   CLOSED: "Cerrado",
+  COMMENT: "Comentario agregado",
+  SIGNIFICANCE_UPVOTE: "Voto de relevancia",
 };
 
 export default function IncidentDetailPage() {
@@ -142,6 +160,9 @@ export default function IncidentDetailPage() {
   const [mediaUrls, setMediaUrls] = useState<Map<string, string>>(new Map());
   const [loadingMedia, setLoadingMedia] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<number | null>(null);
+  const [commentText, setCommentText] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [votingSignificance, setVotingSignificance] = useState(false);
   const user = getUser();
 
   useEffect(() => {
@@ -213,6 +234,71 @@ export default function IncidentDetailPage() {
     setRefreshing(true);
     await Promise.all([fetchIncident(), fetchHistory()]);
     setRefreshing(false);
+  };
+
+  const handleSubmitComment = async () => {
+    if (!commentText.trim()) {
+      toast.error("El comentario no puede estar vacío");
+      return;
+    }
+
+    setSubmittingComment(true);
+    try {
+      const response = await fetch(
+        `https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents/${incidentId}/comments`,
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ text: commentText.trim() }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success("Comentario agregado exitosamente");
+        setCommentText("");
+        // Refresh incident to get updated comments
+        await fetchIncident();
+        await fetchHistory();
+      } else {
+        const error = await response.json();
+        toast.error(error.message || "Error al agregar comentario");
+      }
+    } catch (err) {
+      console.error("Error submitting comment:", err);
+      toast.error("Error al agregar comentario");
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleVoteSignificance = async () => {
+    setVotingSignificance(true);
+    try {
+      const response = await fetch(
+        `https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents/${incidentId}/significance`,
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success("Voto de relevancia registrado");
+        // Refresh incident to get updated significance count
+        await fetchIncident();
+        await fetchHistory();
+      } else {
+        const error = await response.json();
+        toast.error(error.message || "Error al votar");
+      }
+    } catch (err) {
+      console.error("Error voting significance:", err);
+      toast.error("Error al registrar voto");
+    } finally {
+      setVotingSignificance(false);
+    }
   };
 
   const navigateMedia = (direction: "prev" | "next") => {
@@ -543,6 +629,158 @@ export default function IncidentDetailPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Significance Voting Card */}
+            <Card className="border-2 shadow-lg">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <ThumbsUp className="w-5 h-5 text-purple-600" />
+                      Relevancia del Incidente
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Marca este incidente como importante para priorizar su atención
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                      {incident.significanceCount || 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {(incident.significanceCount || 0) === 1 ? "voto" : "votos"}
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={handleVoteSignificance}
+                  disabled={
+                    votingSignificance ||
+                    (incident.significanceVoters?.includes(user?.email || "") ?? false)
+                  }
+                  className="w-full gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
+                >
+                  {votingSignificance ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Registrando...
+                    </>
+                  ) : incident.significanceVoters?.includes(user?.email || "") ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Ya votaste
+                    </>
+                  ) : (
+                    <>
+                      <ThumbsUp className="w-4 h-4" />
+                      Marcar como Importante
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Comments Section */}
+            <Card className="border-2 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                  Comentarios ({incident.comments?.length || 0})
+                </CardTitle>
+                <CardDescription>
+                  Agrega contexto o actualizaciones sobre este incidente
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Comment Input */}
+                {user?.role === "estudiante" && (
+                  <div className="space-y-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border">
+                    <Textarea
+                      placeholder="Escribe tu comentario aquí..."
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      className="min-h-[100px] resize-none"
+                      maxLength={500}
+                    />
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        {commentText.length}/500 caracteres
+                      </p>
+                      <Button
+                        onClick={handleSubmitComment}
+                        disabled={!commentText.trim() || submittingComment}
+                        className="gap-2"
+                      >
+                        {submittingComment ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4" />
+                            Enviar Comentario
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Comments List */}
+                {incident.comments && incident.comments.length > 0 ? (
+                  <ScrollArea className="h-[400px] pr-4">
+                    <div className="space-y-3">
+                      {incident.comments
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .map((comment) => (
+                          <div
+                            key={comment.commentId}
+                            className="p-4 rounded-lg border bg-white dark:bg-slate-950"
+                          >
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                                  {comment.by.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {comment.by}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground capitalize">
+                                    {comment.role}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-muted-foreground">
+                                  {formatDate(comment.timestamp)}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatRelativeTime(comment.timestamp)}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="text-sm text-foreground leading-relaxed">
+                              {comment.text}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                    <p>No hay comentarios aún</p>
+                    {user?.role === "estudiante" && (
+                      <p className="text-sm mt-1">¡Sé el primero en comentar!</p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* ID Card */}
             <Card className="border-2 border-dashed">
