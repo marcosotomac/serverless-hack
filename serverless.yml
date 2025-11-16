@@ -54,6 +54,9 @@ provider:
   iam:
     role: arn:aws:iam::590953801135:role/LabRole
 
+plugins:
+  - serverless-python-requirements
+
 functions:
   register:
     handler: src/handlers/auth/register.handler
@@ -249,7 +252,7 @@ package:
 
 custom:
   pythonRequirements:
-    dockerizePip: true
+    dockerizePip: false
     layer: false
     slim: true
     strip: false
