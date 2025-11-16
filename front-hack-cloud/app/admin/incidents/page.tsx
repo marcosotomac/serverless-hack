@@ -140,23 +140,46 @@ export default function AdminIncidentsPage() {
 
   const fetchIncidents = useCallback(async () => {
     try {
+      console.log("Fetching admin incidents...");
+      console.log("Auth headers:", getAuthHeaders());
+      
       const response = await fetch(
         "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/admin/incidents",
         { headers: getAuthHeaders() }
       );
 
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers);
+
       if (response.ok) {
         const data = await response.json();
+        console.log("Admin incidents data:", data);
+        console.log("Incidents array:", data.incidents);
+        console.log("Incidents count:", data.incidents?.length || 0);
+        
         setIncidents(data.incidents || []);
       } else {
-        console.error("Error fetching incidents");
+        const errorText = await response.text();
+        console.error("Error fetching incidents:", response.status, errorText);
+        
+        if (response.status === 401) {
+          toast.error("Sesión expirada. Redirigiendo al login...");
+          setTimeout(() => router.push("/auth/login"), 2000);
+        } else {
+          toast.error("Error al cargar incidentes", {
+            description: `Error ${response.status}: ${errorText}`,
+          });
+        }
       }
     } catch (err) {
       console.error("Error:", err);
+      toast.error("Error de conexión", {
+        description: "No se pudo conectar con el servidor",
+      });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   // Subscribe to WebSocket events
   useEffect(() => {
@@ -477,10 +500,28 @@ export default function AdminIncidentsPage() {
             ) : (
               <div className="space-y-4">
                 {filteredIncidents.map((incident) => {
-                  const statusConfig = STATUS_CONFIG[incident.status];
+                  const statusConfig =
+                    STATUS_CONFIG[incident.status] ?? {
+                      label: incident.status || "Desconocido",
+                      color: "bg-gray-100 text-gray-700 border-gray-200",
+                      icon: AlertCircle,
+                      dotColor: "bg-gray-500",
+                    };
                   const StatusIcon = statusConfig.icon;
-                  const urgencyConfig = URGENCY_CONFIG[incident.urgency];
-                  const priorityConfig = URGENCY_CONFIG[incident.priority];
+                  const urgencyConfig =
+                    incident.urgency && URGENCY_CONFIG[incident.urgency as UrgencyLevel]
+                      ? URGENCY_CONFIG[incident.urgency as UrgencyLevel]
+                      : {
+                          label: incident.urgency || "N/A",
+                          color: "bg-gray-100 text-gray-700",
+                        };
+                  const priorityConfig =
+                    incident.priority && URGENCY_CONFIG[incident.priority as UrgencyLevel]
+                      ? URGENCY_CONFIG[incident.priority as UrgencyLevel]
+                      : {
+                          label: incident.priority || "N/A",
+                          color: "bg-gray-100 text-gray-700",
+                        };
 
                   return (
                     <Card
@@ -548,20 +589,35 @@ export default function AdminIncidentsPage() {
                             </Button>
 
                             {user?.role === "autoridad" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="gap-2"
-                                  onClick={() =>
-                                    openDialog(incident, "priority")
-                                  }
-                                >
-                                  <ArrowUpCircle className="w-4 h-4" />
-                                  Prioridad
-                                </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                                onClick={() =>
+                                  openDialog(incident, "priority")
+                                }
+                              >
+                                <ArrowUpCircle className="w-4 h-4" />
+                                Prioridad
+                              </Button>
+                            )}
 
-                                {incident.status !== "resuelto" && (
+                            {(user?.role === "personal" ||
+                              user?.role === "autoridad") &&
+                              incident.status !== "resuelto" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="gap-2"
+                                    onClick={() =>
+                                      openDialog(incident, "status")
+                                    }
+                                  >
+                                    <Activity className="w-4 h-4" />
+                                    Estado
+                                  </Button>
+
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -573,22 +629,7 @@ export default function AdminIncidentsPage() {
                                     <CheckCircle2 className="w-4 h-4" />
                                     Cerrar
                                   </Button>
-                                )}
-                              </>
-                            )}
-
-                            {(user?.role === "personal" ||
-                              user?.role === "autoridad") &&
-                              incident.status !== "resuelto" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="gap-2"
-                                  onClick={() => openDialog(incident, "status")}
-                                >
-                                  <Activity className="w-4 h-4" />
-                                  Estado
-                                </Button>
+                                </>
                               )}
                           </div>
                         </div>

@@ -243,10 +243,18 @@ export default function IncidentDetailPage() {
     );
   }
 
-  const statusConfig = STATUS_CONFIG[incident.status];
+  const statusConfig =
+    STATUS_CONFIG[incident.status] ?? {
+      label: incident.status || "Desconocido",
+      color: "bg-gray-100 text-gray-700 border-gray-200",
+      icon: AlertCircle,
+      dotColor: "bg-gray-500",
+    };
   const StatusIcon = statusConfig.icon;
-  const urgencyConfig = URGENCY_CONFIG[incident.urgency];
-  const priorityConfig = URGENCY_CONFIG[incident.priority];
+  const urgencyConfig =
+    URGENCY_CONFIG[incident.urgency] ?? { label: incident.urgency || "N/A", color: "bg-gray-100 text-gray-700" };
+  const priorityConfig =
+    URGENCY_CONFIG[incident.priority] ?? { label: incident.priority || "N/A", color: "bg-gray-100 text-gray-700" };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">

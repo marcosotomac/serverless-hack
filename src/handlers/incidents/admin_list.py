@@ -6,13 +6,14 @@ from src.common.incidents import normalize_priority, normalize_status, normalize
 from src.common.response import json_response
 from src.common.security import AuthError, get_authenticated_claims
 
-DEFAULT_ACTIVE_STATUSES = ["pendiente", "en_atencion"]
+# Changed to None to get all incidents by default
+DEFAULT_ACTIVE_STATUSES = None
 PRIORITY_WEIGHTS = {"critica": 4, "alta": 3, "media": 2, "baja": 1}
 
 
 def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
     try:
-        get_authenticated_claims(event, allowed_roles={"autoridad"})
+        get_authenticated_claims(event, allowed_roles={"personal", "autoridad"})
     except AuthError as exc:
         return json_response(401, {"message": str(exc)})
 
