@@ -1,12 +1,8 @@
-import json
 import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import Optional
-
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
-
-
-_sns = boto3.client("sns")
 
 
 def send_registration_email(
@@ -14,9 +10,13 @@ def send_registration_email(
     full_name: Optional[str],
     role: str,
 ) -> None:
-    """Publish a registration notification to SNS with an HTML email payload."""
-    topic_arn = os.environ.get("USER_NOTIFICATIONS_TOPIC_ARN")
-    if not topic_arn:
+    """Send a registration notification through Gmail SMTP."""
+    sender = os.environ.get("SMTP_FROM_ADDRESS")
+    username = os.environ.get("SMTP_USERNAME", sender)
+    password = os.environ.get("SMTP_PASSWORD")
+    host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    port = int(os.environ.get("SMTP_PORT", "587"))
+    if not sender or not username or not password:
         return
 
     subject = "Bienvenido a AlertaUTEC"
@@ -112,21 +112,18 @@ def send_registration_email(
         "Ingresa a la aplicación para comenzar a reportar incidentes."
     )
 
-    message = json.dumps(
-        {
-            "default": plain_text,
-            "email": html_body,
-        }
-    )
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = sender
+    message["To"] = email
+    message.attach(MIMEText(plain_text, "plain", "utf-8"))
+    message.attach(MIMEText(html_body, "html", "utf-8"))
 
     try:
-        _sns.publish(
-            TopicArn=topic_arn,
-            Message=message,
-            MessageStructure="json",
-            Subject=subject,
-        )
-    except (BotoCoreError, ClientError):
-        # Ignore SNS failures to avoid blocking registration.
+        with smtplib.SMTP(host, port, timeout=15) as smtp:
+            smtp.starttls()
+            smtp.login(username, password)
+            smtp.sendmail(sender, [email], message.as_string())
+    except smtplib.SMTPException:
+        # Ignore SMTP failures to avoid bloquear el registro.
         return
-
