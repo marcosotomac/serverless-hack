@@ -3,8 +3,9 @@ import hashlib
 import hmac
 import json
 import os
+from functools import wraps
 from time import time
-from typing import Any, Dict
+from typing import Any, Callable, Dict, List
 
 
 ALLOWED_ROLES = {
@@ -100,4 +101,75 @@ def _b64url(data: bytes) -> str:
 def _b64url_decode(data: str) -> bytes:
     padding = "=" * (-len(data) % 4)
     return base64.urlsafe_b64decode(data + padding)
+
+
+def authorize(allowed_roles: List[str]):
+    """
+    Decorador para autorizar funciones Lambda basado en roles
+    
+    Args:
+        allowed_roles: Lista de roles permitidos (ej: ["autoridad", "personal"])
+    
+    Returns:
+        Decorador que valida el token JWT y verifica el rol
+    
+    Example:
+        @authorize(["autoridad"])
+        def handler(event, context):
+            # Solo usuarios con rol 'autoridad' pueden acceder
+            pass
+    """
+    def decorator(handler_func: Callable):
+        @wraps(handler_func)
+        def wrapper(event, context):
+            # Obtener el token del header Authorization
+            headers = event.get("headers", {})
+            auth_header = headers.get("authorization") or headers.get("Authorization")
+            
+            if not auth_header:
+                return {
+                    "statusCode": 401,
+                    "body": json.dumps({"error": "Token de autorización requerido"})
+                }
+            
+            # Extraer el token (formato: "Bearer <token>")
+            try:
+                token = auth_header.split(" ")[1] if " " in auth_header else auth_header
+            except IndexError:
+                return {
+                    "statusCode": 401,
+                    "body": json.dumps({"error": "Formato de token inválido"})
+                }
+            
+            # Decodificar y validar el token
+            try:
+                claims = decode_session_token(token)
+            except ValueError as e:
+                return {
+                    "statusCode": 401,
+                    "body": json.dumps({"error": str(e)})
+                }
+            
+            # Verificar el rol
+            user_role = claims.get("role")
+            if user_role not in allowed_roles:
+                return {
+                    "statusCode": 403,
+                    "body": json.dumps({
+                        "error": f"Acceso denegado. Requiere uno de los roles: {', '.join(allowed_roles)}"
+                    })
+                }
+            
+            # Agregar claims al contexto del evento para que el handler pueda usarlos
+            if "requestContext" not in event:
+                event["requestContext"] = {}
+            if "authorizer" not in event["requestContext"]:
+                event["requestContext"]["authorizer"] = {}
+            event["requestContext"]["authorizer"]["lambda"] = claims
+            
+            # Ejecutar el handler original
+            return handler_func(event, context)
+        
+        return wrapper
+    return decorator
 
