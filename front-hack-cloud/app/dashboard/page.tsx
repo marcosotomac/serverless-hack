@@ -19,6 +19,7 @@ import {
   getAuthHeaders,
 } from "@/lib/auth";
 import { ConnectionStatus } from "@/components/connection-status";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useWebSocket } from "@/lib/websocket";
 import { toast } from "sonner";
 import {
@@ -208,11 +209,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 overflow-x-hidden">
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 max-w-full">
+          <div className="flex items-center justify-between gap-2 min-w-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                 <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -225,22 +226,23 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[150px]">
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[120px]">
                   {user.fullName || user.email}
                 </p>
-                <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user.role}</p>
               </div>
+              <ThemeToggle />
               <ConnectionStatus />
               {(user.role === "personal" || user.role === "autoridad") && (
                 <Button
                   variant="outline"
                   onClick={() => router.push("/admin/incidents")}
-                  className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4"
+                  className="gap-1 text-xs px-2 h-8"
                   size="sm"
                 >
-                  <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <Shield className="h-3 w-3" />
                   <span className="hidden xs:inline">Panel Admin</span>
                   <span className="xs:hidden">Admin</span>
                 </Button>
@@ -249,9 +251,9 @@ export default function DashboardPage() {
                 variant="outline"
                 onClick={handleLogout}
                 size="sm"
-                className="text-xs sm:text-sm px-2 sm:px-4"
+                className="text-xs px-2 h-8 gap-1"
               >
-                <LogOut className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <LogOut className="h-3 w-3" />
                 <span className="hidden xs:inline">Cerrar Sesión</span>
                 <span className="xs:hidden">Salir</span>
               </Button>

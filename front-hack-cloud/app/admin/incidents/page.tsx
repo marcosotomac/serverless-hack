@@ -28,6 +28,7 @@ import {
 import { getAuthHeaders, getUser, isAuthenticated } from "@/lib/auth";
 import { useWebSocket } from "@/lib/websocket";
 import { ConnectionStatus } from "@/components/connection-status";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
 import {
   AlertCircle,
@@ -329,50 +330,53 @@ export default function AdminIncidentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-x-hidden">
       {/* Animated Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-1/2 -left-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-blob" />
         <div className="absolute top-1/4 -right-1/4 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-blob animation-delay-2000" />
       </div>
 
-      <div className="container max-w-7xl mx-auto px-4 py-8">
+      <div className="container max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 min-w-0">
             <Button
               variant="outline"
               size="icon"
               onClick={() => router.push("/dashboard")}
               title="Volver al Dashboard"
-              className="shrink-0"
+              className="shrink-0 h-9 w-9"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl shadow-lg shrink-0">
-              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            <div className="p-2 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg sm:rounded-xl shadow-lg shrink-0">
+              <Shield className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
                 Panel Administrativo
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                Gestión y seguimiento de todos los incidentes
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground truncate">
+                Gestión de incidentes
               </p>
             </div>
-            <ConnectionStatus />
+            <div className="flex items-center gap-1.5 shrink-0">
+              <ThemeToggle />
+              <ConnectionStatus />
+            </div>
           </div>
 
           {/* Search Bar */}
           <Card className="border-2">
             <CardContent className="pt-4 sm:pt-6">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por ubicación, descripción o tipo..."
+                  placeholder="Buscar incidentes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 sm:pl-10 text-sm sm:text-base"
+                  className="pl-9 text-sm"
                 />
               </div>
             </CardContent>

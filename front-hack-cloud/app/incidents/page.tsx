@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getAuthHeaders, getUser, isAuthenticated, getToken } from "@/lib/auth";
 import { useWebSocket } from "@/lib/websocket";
 import { ConnectionStatus } from "@/components/connection-status";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
 import {
   AlertCircle,
@@ -259,44 +260,49 @@ export default function IncidentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-x-hidden">
       {/* Animated Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-1/2 -left-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-blob" />
         <div className="absolute top-1/4 -right-1/4 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-blob animation-delay-2000" />
       </div>
 
-      <div className="container max-w-7xl mx-auto px-4 py-8">
+      <div className="container max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
             <Button
               variant="outline"
               size="icon"
               onClick={() => router.push("/dashboard")}
               title="Volver al Dashboard"
+              className="shrink-0 h-9 w-9"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Mis Incidentes
               </h1>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-muted-foreground text-sm sm:text-base mt-1 sm:mt-2">
                 Gestiona y da seguimiento a tus reportes
               </p>
             </div>
-            <ConnectionStatus />
           </div>
 
-          <Button
-            onClick={() => router.push("/incidents/new")}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2"
-            size="lg"
-          >
-            <Plus className="w-5 h-5" />
-            Nuevo Incidente
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle />
+            <ConnectionStatus />
+            <Button
+              onClick={() => router.push("/incidents/new")}
+              className="bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2 text-sm sm:text-base h-9 sm:h-10"
+              size="sm"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden xs:inline">Nuevo Incidente</span>
+              <span className="xs:hidden">Nuevo</span>
+            </Button>
+          </div>
         </div>
 
         {/* Error Alert */}

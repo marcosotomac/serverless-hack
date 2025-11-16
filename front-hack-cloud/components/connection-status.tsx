@@ -10,17 +10,17 @@ export function ConnectionStatus() {
   return (
     <Badge
       variant={isConnected ? "default" : "secondary"}
-      className="flex items-center gap-1"
+      className="flex items-center gap-1 shrink-0"
     >
       {isConnected ? (
         <>
-          <Wifi className="h-3 w-3" />
-          <span className="text-xs">Conectado</span>
+          <Wifi className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+          <span className="text-[10px] sm:text-xs hidden xs:inline">Conectado</span>
         </>
       ) : (
         <>
-          <WifiOff className="h-3 w-3" />
-          <span className="text-xs">Desconectado</span>
+          <WifiOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+          <span className="text-[10px] sm:text-xs hidden xs:inline">Desconectado</span>
         </>
       )}
     </Badge>
