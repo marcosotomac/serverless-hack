@@ -218,14 +218,14 @@ export default function DashboardPage() {
                 <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h1 className="text-xl font-bold gradient-text">AlertaUTEC</h1>
+                <h1 className="text-lg sm:text-xl font-bold gradient-text">AlertaUTEC</h1>
                 <p className="text-xs text-slate-500">Dashboard</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[150px]">
                   {user.fullName || user.email}
                 </p>
                 <p className="text-xs text-slate-500 capitalize">{user.role}</p>
@@ -235,15 +235,23 @@ export default function DashboardPage() {
                 <Button
                   variant="outline"
                   onClick={() => router.push("/admin/incidents")}
-                  className="gap-2"
+                  className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4"
+                  size="sm"
                 >
-                  <Shield className="h-4 w-4" />
-                  Panel Admin
+                  <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden xs:inline">Panel Admin</span>
+                  <span className="xs:hidden">Admin</span>
                 </Button>
               )}
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Cerrar Sesión
+              <Button 
+                variant="outline" 
+                onClick={handleLogout}
+                size="sm"
+                className="text-xs sm:text-sm px-2 sm:px-4"
+              >
+                <LogOut className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Cerrar Sesión</span>
+                <span className="xs:hidden">Salir</span>
               </Button>
             </div>
           </div>
@@ -251,21 +259,21 @@ export default function DashboardPage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">
             Bienvenido de vuelta, {user.fullName?.split(" ")[0] || "Usuario"}
           </h2>
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
             Este es tu panel de control de AlertaUTEC
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-xs sm:text-sm font-medium">
                 Mis Reportes
               </CardTitle>
               <AlertCircle className="h-4 w-4 text-blue-600" />
@@ -275,7 +283,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.total}</div>
+                  <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
                   <p className="text-xs text-slate-500 mt-1">
                     Reportes totales
                   </p>
@@ -286,7 +294,7 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">En Proceso</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">En Proceso</CardTitle>
               <Clock className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
@@ -294,7 +302,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-2xl font-bold">
+                  <div className="text-xl sm:text-2xl font-bold">
                     {stats.pendiente + stats.en_atencion}
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
@@ -307,7 +315,7 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Resueltos</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Resueltos</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
@@ -315,7 +323,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.resuelto}</div>
+                  <div className="text-xl sm:text-2xl font-bold">{stats.resuelto}</div>
                   <p className="text-xs text-slate-500 mt-1">
                     Reportes cerrados
                   </p>
@@ -327,40 +335,40 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <Card>
-          <CardHeader>
-            <CardTitle>Acciones Rápidas</CardTitle>
-            <CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg sm:text-xl">Acciones Rápidas</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Accede a las funciones principales de la plataforma
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               <Button
-                className="h-20 bg-blue-600 hover:bg-blue-700"
+                className="h-16 sm:h-20 bg-blue-600 hover:bg-blue-700 text-sm sm:text-base"
                 onClick={() => router.push("/incidents/new")}
               >
                 <div className="flex flex-col items-center">
-                  <Plus className="h-6 w-6 mb-2" />
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 mb-1 sm:mb-2" />
                   <span>Nuevo Reporte</span>
                 </div>
               </Button>
               <Button
                 variant="outline"
-                className="h-20"
+                className="h-16 sm:h-20 text-sm sm:text-base"
                 onClick={() => router.push("/incidents")}
               >
                 <div className="flex flex-col items-center">
-                  <List className="h-6 w-6 mb-2" />
+                  <List className="h-5 w-5 sm:h-6 sm:w-6 mb-1 sm:mb-2" />
                   <span>Mis Reportes</span>
                 </div>
               </Button>
               <Button
                 variant="outline"
-                className="h-20"
+                className="h-16 sm:h-20 text-sm sm:text-base"
                 onClick={() => router.push("/incidents")}
               >
                 <div className="flex flex-col items-center">
-                  <CheckCircle className="h-6 w-6 mb-2" />
+                  <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 mb-1 sm:mb-2" />
                   <span>Ver Todos</span>
                 </div>
               </Button>
@@ -384,14 +392,14 @@ export default function DashboardPage() {
           </Card>
         ) : recentIncidents.length > 0 ? (
           <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Incidentes Recientes</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Incidentes Recientes</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Tus últimos reportes de incidentes
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {recentIncidents.map((incident) => {
                   const statusConfig = STATUS_CONFIG[incident.status];
                   const StatusIcon = statusConfig.icon;
@@ -400,45 +408,47 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={incident.incidentId}
-                      className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                      className="flex items-start gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
                       onClick={() =>
                         router.push(`/incidents/${incident.incidentId}`)
                       }
                     >
-                      <div className="text-2xl mt-1">
+                      <div className="text-xl sm:text-2xl mt-1 shrink-0">
                         {TYPE_EMOJI[incident.type] || "📋"}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <div>
-                            <h4 className="font-semibold text-sm capitalize">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-xs sm:text-sm capitalize truncate">
                               {incident.type}
                             </h4>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                              <MapPin className="h-3 w-3" />
+                            <p className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 mt-1 truncate">
+                              <MapPin className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                               {incident.location}
                             </p>
                           </div>
-                          <div className="flex flex-col items-end gap-2">
+                          <div className="flex flex-col items-end gap-1 sm:gap-2 shrink-0">
                             <Badge
                               variant="outline"
-                              className={statusConfig.color}
+                              className={`${statusConfig.color} text-[10px] sm:text-xs`}
                             >
-                              <StatusIcon className="w-3 h-3 mr-1" />
-                              {statusConfig.label}
+                              <StatusIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
+                              <span className="hidden xs:inline">{statusConfig.label}</span>
+                              <span className="xs:hidden">{statusConfig.label.substring(0, 4)}</span>
                             </Badge>
                             <Badge
                               variant="outline"
-                              className={urgencyConfig.color}
+                              className={`${urgencyConfig.color} text-[10px] sm:text-xs`}
                             >
-                              {urgencyConfig.label}
+                              <span className="hidden xs:inline">{urgencyConfig.label}</span>
+                              <span className="xs:hidden">{urgencyConfig.label.charAt(0)}</span>
                             </Badge>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                           {incident.description}
                         </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 sm:gap-4 mt-2 text-[10px] sm:text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             {formatDate(incident.createdAt)}
