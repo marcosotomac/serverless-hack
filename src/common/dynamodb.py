@@ -214,6 +214,19 @@ def add_significance_vote(
 ) -> Dict[str, Any]:
     table = _incidents_table()
     now = int(time())
+    
+    # Primero obtenemos el incidente para verificar si ya votó
+    incident = get_incident(incident_id)
+    if not incident:
+        raise ValueError("Incidente no encontrado")
+    
+    # Verificar si el usuario ya votó
+    voters = incident.get("significanceVoters", set())
+    if isinstance(voters, list):
+        voters = set(voters)
+    if voter in voters:
+        raise ValueError("El usuario ya marcó este incidente como significativo")
+    
     try:
         response = table.update_item(
             Key={"incidentId": incident_id},
@@ -228,13 +241,12 @@ def add_significance_vote(
                 ":emptyList": [],
                 ":one": 1,
                 ":voterSet": {voter},
-                ":voter": voter,
             },
-            ConditionExpression="attribute_not_exists(significanceVoters) OR NOT contains(significanceVoters, :voter)",
+            ConditionExpression="attribute_exists(incidentId)",
             ReturnValues="ALL_NEW",
         )
         return response["Attributes"]
     except ClientError as exc:
         if exc.response["Error"]["Code"] == "ConditionalCheckFailedException":
-            raise ValueError("El usuario ya marcó este incidente como significativo") from exc
+            raise ValueError("Incidente no encontrado") from exc
         raise
