@@ -55,7 +55,13 @@ interface AnalyticsData {
       total_incidents: number;
     }>;
   };
-  availableQueries: string[];
+  metadata?: {
+    total_incidents: number;
+    timestamp: string;
+    source: string;
+    latency_ms: number;
+  };
+  availableQueries?: string[];
   errors?: Record<string, string>;
 }
 
@@ -99,8 +105,35 @@ export default function AnalyticsPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      
+      /**
+       * ARQUITECTURA HÍBRIDA DE ANALÍTICAS:
+       * 
+       * 1. TIEMPO REAL (Dashboard Principal):
+       *    - Endpoint: GET /analytics/realtime
+       *    - Fuente: DynamoDB directo
+       *    - Latencia: 0ms (instantáneo)
+       *    - Uso: Métricas en vivo para dashboard
+       * 
+       * 2. HISTÓRICO (Análisis Profundo):
+       *    - Endpoint: GET /analytics/incidents (Athena)
+       *    - Fuente: S3 + AWS Athena
+       *    - Latencia: ~1 hora (sync por cron)
+       *    - Uso: Queries SQL complejas, análisis histórico, tendencias a largo plazo
+       * 
+       * 3. EXPORTACIÓN (Reportes):
+       *    - Endpoint: POST /analytics/export
+       *    - Fuente: DynamoDB directo
+       *    - Formatos: PDF, Excel, CSV
+       *    - Uso: Descarga de reportes instantáneos
+       * 
+       * Ventajas del híbrido:
+       * - Dashboard siempre actualizado (mejor UX)
+       * - Athena disponible para análisis complejos sin impactar performance
+       * - Costos optimizados (menos queries a Athena)
+       */
       const response = await fetch(
-        `${API_BASE_URL}/analytics/incidents?queries=incidents_by_type,incidents_by_status,incidents_by_urgency,incidents_by_location,incidents_by_day,top_reporters,staff_workload,significance_trends`,
+        `${API_BASE_URL}/analytics/realtime`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -110,13 +143,11 @@ export default function AnalyticsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Analytics data received:", data);
+        console.log("Real-time analytics data received:", data);
         setAnalytics(data);
-
-        if (data.errors && Object.keys(data.errors).length > 0) {
-          console.warn("Errores en algunos queries:", data.errors);
-          toast.error("Algunos datos de analíticas no están disponibles. Verifica la configuración de Athena.");
-        }
+        
+        // Nota: El endpoint en tiempo real NO tiene errores de Athena
+        // Los datos son instantáneos desde DynamoDB
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error("Error response:", errorData);
@@ -186,12 +217,13 @@ export default function AnalyticsPage() {
   const staffWorkload = analytics?.results.staff_workload || [];
   const significanceTrends = analytics?.results.significance_trends || [];
 
-  const totalIncidents = byStatus.reduce((sum, item) => sum + item.count, 0);
+  // Total desde metadata (en tiempo real)
+  const totalIncidents = analytics?.metadata?.total_incidents || 0;
+  const dataSource = analytics?.metadata?.source || "Unknown";
+  const timestamp = analytics?.metadata?.timestamp || "";
   
-  // Verificar si hay errores en todos los queries
-  const allQueriesFailed = analytics?.errors && 
-    Object.keys(analytics.errors).length === 8 &&
-    totalIncidents === 0;
+  // Para compatibilidad, verificar si hay errores (solo en modo Athena)
+  const allQueriesFailed = false; // En tiempo real no hay errores de Athena
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -199,12 +231,20 @@ export default function AnalyticsPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
               📊 Analíticas de Incidentes
+              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200">
+                ⚡ Tiempo Real
+              </Badge>
             </h1>
             <p className="text-muted-foreground">
-              Panel de análisis y reportes para autoridades
+              Panel de análisis y reportes para autoridades • Datos actualizados instantáneamente
             </p>
+            {timestamp && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Última actualización: {new Date(timestamp).toLocaleString("es-MX")}
+              </p>
+            )}
           </div>
           <div className="flex gap-3 items-center">
             <ThemeToggle />

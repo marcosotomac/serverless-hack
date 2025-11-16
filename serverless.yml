@@ -191,6 +191,15 @@ functions:
       - httpApi:
           method: get
           path: /analytics/incidents
+  getRealtimeAnalytics:
+    handler: src/handlers/analytics/realtime.handler
+    description: Analíticas en tiempo real desde DynamoDB sin Athena (solo autoridad).
+    timeout: 30
+    memorySize: 1024
+    events:
+      - httpApi:
+          method: get
+          path: /analytics/realtime
   exportIncidents:
     handler: src/handlers/analytics/export.handler
     description: Exporta incidentes a PDF, Excel o CSV (solo autoridad).
