@@ -26,6 +26,7 @@ provider:
     SMTP_PASSWORD: ${opt:smtpPassword, env:SMTP_PASSWORD, 'qyyt meet kior skgc'}
     SMTP_HOST: ${opt:smtpHost, env:SMTP_HOST, 'smtp.gmail.com'}
     SMTP_PORT: ${opt:smtpPort, env:SMTP_PORT, '587'}
+    INCIDENTS_TABLE: ${self:custom.incidentsTableName}
   iam:
     role: arn:aws:iam::590953801135:role/LabRole
 
@@ -46,6 +47,30 @@ functions:
       - httpApi:
           method: post
           path: /auth/login
+  createIncident:
+    handler: src/handlers/incidents/create.handler
+    description: Creates a new incident report with urgency and location metadata.
+    timeout: 10
+    events:
+      - httpApi:
+          method: post
+          path: /incidents
+  listIncidents:
+    handler: src/handlers/incidents/list.handler
+    description: Lists incidents for dashboards with optional status filtering.
+    timeout: 10
+    events:
+      - httpApi:
+          method: get
+          path: /incidents
+  updateIncident:
+    handler: src/handlers/incidents/update.handler
+    description: Updates incident status or assignment, reserved for personal/autoridad roles.
+    timeout: 10
+    events:
+      - httpApi:
+          method: patch
+          path: /incidents/{incidentId}
 
 package:
   patterns:
@@ -54,6 +79,7 @@ package:
 
 custom:
   usersTableName: ${self:service}-users-${sls:stage}
+  incidentsTableName: ${self:service}-incidents-${sls:stage}
 
 resources:
   Resources:
@@ -68,3 +94,23 @@ resources:
         KeySchema:
           - AttributeName: email
             KeyType: HASH
+    IncidentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.incidentsTableName}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: incidentId
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+        KeySchema:
+          - AttributeName: incidentId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: status-index
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
