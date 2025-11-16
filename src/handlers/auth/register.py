@@ -4,6 +4,7 @@ from typing import Any, Dict
 
 from src.common import auth
 from src.common.dynamodb import get_user, put_user
+from src.common.notifications import send_registration_email
 from src.common.response import json_response
 
 
@@ -51,6 +52,7 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         "updatedAt": timestamp,
     }
     put_user(item)
+    send_registration_email(email=email, full_name=full_name, role=role)
 
     return json_response(
         201,

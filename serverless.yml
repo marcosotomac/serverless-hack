@@ -21,6 +21,8 @@ provider:
   environment:
     USERS_TABLE: ${self:custom.usersTableName}
     AUTH_SECRET: ${opt:authSecret, env:AUTH_SECRET, 'dev-secret'}
+    USER_NOTIFICATIONS_TOPIC_ARN:
+      Ref: UserNotificationsTopic
   iam:
     role: arn:aws:iam::590953801135:role/LabRole
 
@@ -63,3 +65,7 @@ resources:
         KeySchema:
           - AttributeName: email
             KeyType: HASH
+    UserNotificationsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: register-sns
