@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [exportFormat, setExportFormat] = useState("pdf");
+  const [exportFormat, setExportFormat] = useState("excel");
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -322,7 +322,7 @@ export default function AnalyticsPage() {
               Exportar Reportes
             </CardTitle>
             <CardDescription>
-              Descarga todos los incidentes en formato PDF, Excel o CSV
+              Descarga todos los incidentes en formato Excel o CSV
             </CardDescription>
           </CardHeader>
           <CardContent className="flex gap-4 items-end">
@@ -333,7 +333,6 @@ export default function AnalyticsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pdf">PDF - Reporte completo</SelectItem>
                   <SelectItem value="excel">Excel - Hoja de cálculo</SelectItem>
                   <SelectItem value="csv">CSV - Datos tabulados</SelectItem>
                 </SelectContent>

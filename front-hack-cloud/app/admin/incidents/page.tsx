@@ -341,15 +341,6 @@ export default function AdminIncidentsPage() {
         {/* Header */}
         <div className="flex flex-col gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="flex items-center gap-2 min-w-0">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => router.push("/dashboard")}
-              title="Volver al Dashboard"
-              className="shrink-0 h-9 w-9"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
             <div className="p-2 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg sm:rounded-xl shadow-lg shrink-0">
               <Shield className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white" />
             </div>
