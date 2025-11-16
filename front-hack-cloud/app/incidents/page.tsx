@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAuthHeaders, getUser, isAuthenticated, getToken } from "@/lib/auth";
 import { useWebSocket } from "@/lib/websocket";
-import { ConnectionStatus } from "@/components/connection-status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
 import {
@@ -292,7 +291,6 @@ export default function IncidentsPage() {
 
           <div className="flex items-center gap-2 shrink-0">
             <ThemeToggle />
-            <ConnectionStatus />
             <Button
               onClick={() => router.push("/incidents/new")}
               className="bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2 text-sm sm:text-base h-9 sm:h-10"

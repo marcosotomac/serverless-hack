@@ -18,7 +18,6 @@ import {
   isAuthenticated,
   getAuthHeaders,
 } from "@/lib/auth";
-import { ConnectionStatus } from "@/components/connection-status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useWebSocket } from "@/lib/websocket";
 import { toast } from "sonner";
@@ -231,10 +230,11 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[120px]">
                   {user.fullName || user.email}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user.role}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">
+                  {user.role}
+                </p>
               </div>
               <ThemeToggle />
-              <ConnectionStatus />
               {(user.role === "personal" || user.role === "autoridad") && (
                 <Button
                   variant="outline"

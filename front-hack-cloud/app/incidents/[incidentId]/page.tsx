@@ -215,11 +215,13 @@ export default function IncidentDetailPage() {
     setRefreshing(false);
   };
 
-  const navigateMedia = (direction: 'prev' | 'next') => {
+  const navigateMedia = (direction: "prev" | "next") => {
     if (!incident?.media || selectedMedia === null) return;
-    
-    if (direction === 'prev') {
-      setSelectedMedia((selectedMedia - 1 + incident.media.length) % incident.media.length);
+
+    if (direction === "prev") {
+      setSelectedMedia(
+        (selectedMedia - 1 + incident.media.length) % incident.media.length
+      );
     } else {
       setSelectedMedia((selectedMedia + 1) % incident.media.length);
     }
@@ -444,16 +446,21 @@ export default function IncidentDetailPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {incident.media.map((mediaKey, index) => {
                         const url = mediaUrls.get(mediaKey);
-                        const isVideo = mediaKey.includes('.mp4') || 
-                                       mediaKey.includes('.mov') || 
-                                       mediaKey.includes('.mkv') ||
-                                       mediaKey.includes('video/');
-                        
+                        const isVideo =
+                          mediaKey.includes(".mp4") ||
+                          mediaKey.includes(".mov") ||
+                          mediaKey.includes(".mkv") ||
+                          mediaKey.includes("video/");
+
                         return (
                           <div
                             key={index}
-                            onClick={() => !isVideo && url && setSelectedMedia(index)}
-                            className={`relative group rounded-lg overflow-hidden border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 hover:border-blue-400 dark:hover:border-blue-600 transition-colors ${!isVideo && url ? 'cursor-pointer' : ''}`}
+                            onClick={() =>
+                              !isVideo && url && setSelectedMedia(index)
+                            }
+                            className={`relative group rounded-lg overflow-hidden border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 hover:border-blue-400 dark:hover:border-blue-600 transition-colors ${
+                              !isVideo && url ? "cursor-pointer" : ""
+                            }`}
                           >
                             <div className="aspect-square relative bg-slate-200 dark:bg-slate-800">
                               {url ? (
@@ -481,10 +488,14 @@ export default function IncidentDetailPage() {
                                   )}
                                 </div>
                               )}
-                              
+
                               {/* Type Badge */}
                               <div className="absolute top-2 right-2">
-                                <Badge className={isVideo ? "bg-purple-500" : "bg-blue-500"}>
+                                <Badge
+                                  className={
+                                    isVideo ? "bg-purple-500" : "bg-blue-500"
+                                  }
+                                >
                                   {isVideo ? (
                                     <>
                                       <Video className="w-3 h-3 mr-1" />
@@ -499,11 +510,12 @@ export default function IncidentDetailPage() {
                                 </Badge>
                               </div>
                             </div>
-                            
+
                             {/* File name */}
                             <div className="p-2 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
                               <p className="text-xs truncate text-muted-foreground">
-                                {mediaKey.split('/').pop() || `Archivo ${index + 1}`}
+                                {mediaKey.split("/").pop() ||
+                                  `Archivo ${index + 1}`}
                               </p>
                             </div>
                           </div>
@@ -653,7 +665,10 @@ export default function IncidentDetailPage() {
       </div>
 
       {/* Media Lightbox Dialog */}
-      <Dialog open={selectedMedia !== null} onOpenChange={(open) => !open && setSelectedMedia(null)}>
+      <Dialog
+        open={selectedMedia !== null}
+        onOpenChange={(open) => !open && setSelectedMedia(null)}
+      >
         <DialogContent className="max-w-4xl w-full p-0">
           {selectedMedia !== null && incident?.media && (
             <div className="relative">
@@ -685,7 +700,7 @@ export default function IncidentDetailPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => navigateMedia('prev')}
+                    onClick={() => navigateMedia("prev")}
                     className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-12 h-12"
                   >
                     <ChevronLeft className="w-6 h-6" />
@@ -693,7 +708,7 @@ export default function IncidentDetailPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => navigateMedia('next')}
+                    onClick={() => navigateMedia("next")}
                     className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-12 h-12"
                   >
                     <ChevronRight className="w-6 h-6" />
@@ -704,7 +719,7 @@ export default function IncidentDetailPage() {
               {/* File Info */}
               <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm p-4 text-white">
                 <p className="text-sm truncate">
-                  {incident.media[selectedMedia].split('/').pop()}
+                  {incident.media[selectedMedia].split("/").pop()}
                 </p>
               </div>
             </div>

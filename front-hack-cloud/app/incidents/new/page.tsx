@@ -136,55 +136,60 @@ export default function NewIncidentPage() {
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    
+
     // Validar tipo de archivo
-    const validFiles = files.filter(file => {
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
-      
+    const validFiles = files.filter((file) => {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+
       if (!isImage && !isVideo) {
         toast.error(`${file.name} no es una imagen o video válido`);
         return false;
       }
-      
+
       // Validar tamaño (max 50MB)
       const maxSize = 50 * 1024 * 1024;
       if (file.size > maxSize) {
         toast.error(`${file.name} es demasiado grande (máx 50MB)`);
         return false;
       }
-      
+
       return true;
     });
 
     // Crear previsualizaciones
-    const newMediaFiles: MediaFile[] = validFiles.map(file => ({
+    const newMediaFiles: MediaFile[] = validFiles.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
       uploading: false,
       uploaded: false,
     }));
 
-    setMediaFiles(prev => [...prev, ...newMediaFiles]);
-    
+    setMediaFiles((prev) => [...prev, ...newMediaFiles]);
+
     // Limpiar input
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const removeMediaFile = (index: number) => {
-    setMediaFiles(prev => {
+    setMediaFiles((prev) => {
       const file = prev[index];
       URL.revokeObjectURL(file.preview);
       return prev.filter((_, i) => i !== index);
     });
   };
 
-  const uploadMediaFile = async (mediaFile: MediaFile, index: number): Promise<string | null> => {
+  const uploadMediaFile = async (
+    mediaFile: MediaFile,
+    index: number
+  ): Promise<string | null> => {
     try {
       // Actualizar estado a "subiendo"
-      setMediaFiles(prev => prev.map((f, i) => 
-        i === index ? { ...f, uploading: true, error: undefined } : f
-      ));
+      setMediaFiles((prev) =>
+        prev.map((f, i) =>
+          i === index ? { ...f, uploading: true, error: undefined } : f
+        )
+      );
 
       // 1. Solicitar URL de carga
       const uploadResponse = await fetch(
@@ -223,19 +228,26 @@ export default function NewIncidentPage() {
       }
 
       // Actualizar estado a "subido"
-      setMediaFiles(prev => prev.map((f, i) => 
-        i === index ? { ...f, uploading: false, uploaded: true, key: objectKey } : f
-      ));
+      setMediaFiles((prev) =>
+        prev.map((f, i) =>
+          i === index
+            ? { ...f, uploading: false, uploaded: true, key: objectKey }
+            : f
+        )
+      );
 
       return objectKey;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error al subir archivo";
-      
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al subir archivo";
+
       // Actualizar estado a "error"
-      setMediaFiles(prev => prev.map((f, i) => 
-        i === index ? { ...f, uploading: false, error: errorMessage } : f
-      ));
-      
+      setMediaFiles((prev) =>
+        prev.map((f, i) =>
+          i === index ? { ...f, uploading: false, error: errorMessage } : f
+        )
+      );
+
       toast.error(`Error al subir ${mediaFile.file.name}`);
       return null;
     }
@@ -249,10 +261,10 @@ export default function NewIncidentPage() {
     try {
       // 1. Subir archivos multimedia primero
       const mediaKeys: string[] = [];
-      
+
       for (let i = 0; i < mediaFiles.length; i++) {
         const mediaFile = mediaFiles[i];
-        
+
         if (mediaFile.uploaded && mediaFile.key) {
           // Ya está subido
           mediaKeys.push(mediaFile.key);
@@ -557,7 +569,9 @@ export default function NewIncidentPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        mediaFiles.forEach(f => URL.revokeObjectURL(f.preview));
+                        mediaFiles.forEach((f) =>
+                          URL.revokeObjectURL(f.preview)
+                        );
                         setMediaFiles([]);
                       }}
                       disabled={loading}
@@ -566,11 +580,11 @@ export default function NewIncidentPage() {
                       Limpiar todo
                     </Button>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {mediaFiles.map((mediaFile, index) => {
-                      const isVideo = mediaFile.file.type.startsWith('video/');
-                      
+                      const isVideo = mediaFile.file.type.startsWith("video/");
+
                       return (
                         <div
                           key={index}
@@ -589,14 +603,14 @@ export default function NewIncidentPage() {
                                 className="w-full h-full object-cover"
                               />
                             )}
-                            
+
                             {/* Status Overlay */}
                             {mediaFile.uploading && (
                               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                                 <Loader2 className="w-8 h-8 text-white animate-spin" />
                               </div>
                             )}
-                            
+
                             {mediaFile.uploaded && (
                               <div className="absolute top-2 right-2">
                                 <Badge className="bg-green-500 text-white border-0">
@@ -605,7 +619,7 @@ export default function NewIncidentPage() {
                                 </Badge>
                               </div>
                             )}
-                            
+
                             {mediaFile.error && (
                               <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center p-2">
                                 <p className="text-xs text-red-600 dark:text-red-400 text-center font-medium">
@@ -621,7 +635,8 @@ export default function NewIncidentPage() {
                               {mediaFile.file.name}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {(mediaFile.file.size / 1024 / 1024).toFixed(2)} MB
+                              {(mediaFile.file.size / 1024 / 1024).toFixed(2)}{" "}
+                              MB
                             </p>
                           </div>
 
@@ -668,13 +683,17 @@ export default function NewIncidentPage() {
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.type || mediaFiles.some(f => f.uploading)}
+              disabled={
+                loading || !formData.type || mediaFiles.some((f) => f.uploading)
+              }
               className="flex-1 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {mediaFiles.some(f => f.uploading) ? "Subiendo archivos..." : "Creando..."}
+                  {mediaFiles.some((f) => f.uploading)
+                    ? "Subiendo archivos..."
+                    : "Creando..."}
                 </>
               ) : (
                 "Crear Reporte"

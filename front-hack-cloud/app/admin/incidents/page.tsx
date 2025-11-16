@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import { getAuthHeaders, getUser, isAuthenticated } from "@/lib/auth";
 import { useWebSocket } from "@/lib/websocket";
-import { ConnectionStatus } from "@/components/connection-status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
 import {
@@ -363,7 +362,6 @@ export default function AdminIncidentsPage() {
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               <ThemeToggle />
-              <ConnectionStatus />
             </div>
           </div>
 

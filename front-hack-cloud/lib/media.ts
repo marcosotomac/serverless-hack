@@ -1,7 +1,6 @@
 import { getAuthHeaders } from "./auth";
 
-const API_BASE_URL =
-  "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com";
+const API_BASE_URL = "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com";
 
 /**
  * Obtiene la URL firmada de un archivo multimedia
@@ -58,15 +57,18 @@ export async function uploadMedia(
 ): Promise<string | null> {
   try {
     // 1. Solicitar URL de carga
-    const uploadResponse = await fetch(`${API_BASE_URL}/incidents/media/upload`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({
-        contentType: file.type,
-        fileName: file.name,
-        incidentId,
-      }),
-    });
+    const uploadResponse = await fetch(
+      `${API_BASE_URL}/incidents/media/upload`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          contentType: file.type,
+          fileName: file.name,
+          incidentId,
+        }),
+      }
+    );
 
     if (!uploadResponse.ok) {
       throw new Error("Error al solicitar URL de carga");
