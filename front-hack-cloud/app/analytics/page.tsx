@@ -105,47 +105,44 @@ export default function AnalyticsPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      
+
       /**
        * ARQUITECTURA HÍBRIDA DE ANALÍTICAS:
-       * 
+       *
        * 1. TIEMPO REAL (Dashboard Principal):
        *    - Endpoint: GET /analytics/realtime
        *    - Fuente: DynamoDB directo
        *    - Latencia: 0ms (instantáneo)
        *    - Uso: Métricas en vivo para dashboard
-       * 
+       *
        * 2. HISTÓRICO (Análisis Profundo):
        *    - Endpoint: GET /analytics/incidents (Athena)
        *    - Fuente: S3 + AWS Athena
        *    - Latencia: ~1 hora (sync por cron)
        *    - Uso: Queries SQL complejas, análisis histórico, tendencias a largo plazo
-       * 
+       *
        * 3. EXPORTACIÓN (Reportes):
        *    - Endpoint: POST /analytics/export
        *    - Fuente: DynamoDB directo
        *    - Formatos: PDF, Excel, CSV
        *    - Uso: Descarga de reportes instantáneos
-       * 
+       *
        * Ventajas del híbrido:
        * - Dashboard siempre actualizado (mejor UX)
        * - Athena disponible para análisis complejos sin impactar performance
        * - Costos optimizados (menos queries a Athena)
        */
-      const response = await fetch(
-        `${API_BASE_URL}/analytics/realtime`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/analytics/realtime`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
         console.log("Real-time analytics data received:", data);
         setAnalytics(data);
-        
+
         // Nota: El endpoint en tiempo real NO tiene errores de Athena
         // Los datos son instantáneos desde DynamoDB
       } else {
@@ -221,7 +218,7 @@ export default function AnalyticsPage() {
   const totalIncidents = analytics?.metadata?.total_incidents || 0;
   const dataSource = analytics?.metadata?.source || "Unknown";
   const timestamp = analytics?.metadata?.timestamp || "";
-  
+
   // Para compatibilidad, verificar si hay errores (solo en modo Athena)
   const allQueriesFailed = false; // En tiempo real no hay errores de Athena
 
@@ -233,16 +230,21 @@ export default function AnalyticsPage() {
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
               📊 Analíticas de Incidentes
-              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200">
+              <Badge
+                variant="outline"
+                className="bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200"
+              >
                 ⚡ Tiempo Real
               </Badge>
             </h1>
             <p className="text-muted-foreground">
-              Panel de análisis y reportes para autoridades • Datos actualizados instantáneamente
+              Panel de análisis y reportes para autoridades • Datos actualizados
+              instantáneamente
             </p>
             {timestamp && (
               <p className="text-xs text-muted-foreground mt-1">
-                Última actualización: {new Date(timestamp).toLocaleString("es-MX")}
+                Última actualización:{" "}
+                {new Date(timestamp).toLocaleString("es-MX")}
               </p>
             )}
           </div>
@@ -265,22 +267,47 @@ export default function AnalyticsPage() {
                 ⚠️ Datos de Analíticas No Disponibles
               </CardTitle>
               <CardDescription className="text-yellow-700 dark:text-yellow-300">
-                Los datos de analíticas no están disponibles porque la tabla de Athena/Glue 
-                necesita ser reconfigurada. Esto se debe a un problema con las columnas de partición.
+                Los datos de analíticas no están disponibles porque la tabla de
+                Athena/Glue necesita ser reconfigurada. Esto se debe a un
+                problema con las columnas de partición.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm text-yellow-700 dark:text-yellow-300">
-                <p><strong>Pasos para solucionar:</strong></p>
+                <p>
+                  <strong>Pasos para solucionar:</strong>
+                </p>
                 <ol className="list-decimal list-inside space-y-1 ml-2">
                   <li>Ir a AWS Glue Console</li>
-                  <li>Buscar la base de datos: <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">alertautec-auth_analytics_db_dev</code></li>
-                  <li>Eliminar la tabla: <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">incidents</code></li>
-                  <li>Ejecutar: <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">serverless deploy</code> para recrearla</li>
-                  <li>Ejecutar el sync manual o esperar la próxima hora para que se sincronicen los datos</li>
+                  <li>
+                    Buscar la base de datos:{" "}
+                    <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">
+                      alertautec-auth_analytics_db_dev
+                    </code>
+                  </li>
+                  <li>
+                    Eliminar la tabla:{" "}
+                    <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">
+                      incidents
+                    </code>
+                  </li>
+                  <li>
+                    Ejecutar:{" "}
+                    <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">
+                      serverless deploy
+                    </code>{" "}
+                    para recrearla
+                  </li>
+                  <li>
+                    Ejecutar el sync manual o esperar la próxima hora para que
+                    se sincronicen los datos
+                  </li>
                 </ol>
                 <p className="mt-4">
-                  <strong>Mientras tanto, puedes usar la exportación de reportes que no depende de Athena.</strong>
+                  <strong>
+                    Mientras tanto, puedes usar la exportación de reportes que
+                    no depende de Athena.
+                  </strong>
                 </p>
               </div>
             </CardContent>
