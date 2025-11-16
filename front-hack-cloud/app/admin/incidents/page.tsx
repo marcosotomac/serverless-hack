@@ -339,23 +339,24 @@ export default function AdminIncidentsPage() {
       <div className="container max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col gap-4 mb-8">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button
               variant="outline"
               size="icon"
               onClick={() => router.push("/dashboard")}
               title="Volver al Dashboard"
+              className="shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl shadow-lg">
-              <Shield className="w-8 h-8 text-white" />
+            <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl shadow-lg shrink-0">
+              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
                 Panel Administrativo
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 Gestión y seguimiento de todos los incidentes
               </p>
             </div>
@@ -364,14 +365,14 @@ export default function AdminIncidentsPage() {
 
           {/* Search Bar */}
           <Card className="border-2">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por ubicación, descripción o tipo..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 text-base"
+                  className="pl-9 sm:pl-10 text-sm sm:text-base"
                 />
               </div>
             </CardContent>
@@ -379,16 +380,17 @@ export default function AdminIncidentsPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-3">
-              <CardDescription className="flex items-center gap-2 text-xs">
-                <TrendingUp className="w-4 h-4" />
-                Total
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardDescription className="flex items-center gap-1 sm:gap-2 text-xs">
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Total</span>
+                <span className="sm:hidden">Tot.</span>
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stats.total}</div>
+              <div className="text-2xl sm:text-3xl font-bold">{stats.total}</div>
             </CardContent>
           </Card>
 
@@ -401,28 +403,32 @@ export default function AdminIncidentsPage() {
                 key={status}
                 className="border-2 shadow-lg hover:shadow-xl transition-shadow"
               >
-                <CardHeader className="pb-3">
-                  <CardDescription className="flex items-center gap-2 text-xs">
-                    <Icon className="w-4 h-4" />
-                    {config.label}
+                <CardHeader className="pb-2 sm:pb-3">
+                  <CardDescription className="flex items-center gap-1 sm:gap-2 text-xs">
+                    <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">{config.label}</span>
+                    <span className="sm:hidden text-[10px]">
+                      {status === "pendiente" ? "Pend." : status === "en_atencion" ? "Atenc." : "Resuel."}
+                    </span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{stats[status]}</div>
+                  <div className="text-2xl sm:text-3xl font-bold">{stats[status]}</div>
                 </CardContent>
               </Card>
             );
           })}
 
           <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow border-red-200 dark:border-red-800">
-            <CardHeader className="pb-3">
-              <CardDescription className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
-                <AlertCircle className="w-4 h-4" />
-                Críticos
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardDescription className="flex items-center gap-1 sm:gap-2 text-xs text-red-600 dark:text-red-400">
+                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Críticos</span>
+                <span className="sm:hidden text-[10px]">Crít.</span>
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+              <div className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400">
                 {stats.critica}
               </div>
             </CardContent>
@@ -528,77 +534,83 @@ export default function AdminIncidentsPage() {
                       key={incident.incidentId}
                       className="border-2 shadow-lg hover:shadow-xl transition-all"
                     >
-                      <CardHeader>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 space-y-3">
+                      <CardHeader className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                          <div className="flex-1 space-y-2 sm:space-y-3 w-full">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-2xl">
+                              <span className="text-xl sm:text-2xl">
                                 {TYPE_EMOJI[incident.type] || "📋"}
                               </span>
-                              <CardTitle className="text-xl">
+                              <CardTitle className="text-base sm:text-xl truncate">
                                 {incident.type.charAt(0).toUpperCase() +
                                   incident.type.slice(1)}
                               </CardTitle>
                               <Badge
-                                className={`${statusConfig.color} border gap-1.5`}
+                                className={`${statusConfig.color} border gap-1 sm:gap-1.5 text-xs`}
                               >
                                 <div
                                   className={`w-2 h-2 rounded-full ${statusConfig.dotColor} animate-pulse`}
                                 />
-                                {statusConfig.label}
+                                <span className="hidden xs:inline">{statusConfig.label}</span>
+                                <span className="xs:hidden text-[10px]">
+                                  {statusConfig.label.substring(0, 4)}
+                                </span>
                               </Badge>
-                              <Badge className={urgencyConfig.color}>
-                                U: {urgencyConfig.label}
+                              <Badge className={`${urgencyConfig.color} text-xs`}>
+                                <span className="hidden xs:inline">U: {urgencyConfig.label}</span>
+                                <span className="xs:hidden">U:{urgencyConfig.label.charAt(0)}</span>
                               </Badge>
-                              <Badge className={priorityConfig.color}>
-                                P: {priorityConfig.label}
+                              <Badge className={`${priorityConfig.color} text-xs`}>
+                                <span className="hidden xs:inline">P: {priorityConfig.label}</span>
+                                <span className="xs:hidden">P:{priorityConfig.label.charAt(0)}</span>
                               </Badge>
                             </div>
 
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                              <div className="flex items-center gap-1.5">
-                                <MapPin className="w-4 h-4" />
-                                {incident.location}
+                            <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
+                              <div className="flex items-center gap-1 sm:gap-1.5">
+                                <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <span className="truncate max-w-[120px] sm:max-w-none">{incident.location}</span>
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <Calendar className="w-4 h-4" />
-                                {formatDate(incident.createdAt)}
+                              <div className="flex items-center gap-1 sm:gap-1.5">
+                                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <span className="text-[10px] sm:text-xs">{formatDate(incident.createdAt)}</span>
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                <Shield className="w-4 h-4" />
-                                {incident.reporterRole}
+                              <div className="flex items-center gap-1 sm:gap-1.5">
+                                <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <span className="text-[10px] sm:text-xs">{incident.reporterRole}</span>
                               </div>
                             </div>
 
-                            <p className="text-muted-foreground line-clamp-2">
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                               {incident.description}
                             </p>
                           </div>
 
-                          <div className="flex flex-col gap-2 shrink-0">
+                          <div className="flex sm:flex-col gap-2 w-full sm:w-auto shrink-0">
                             <Button
                               size="sm"
                               variant="outline"
-                              className="gap-2"
+                              className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm"
                               onClick={() =>
                                 router.push(`/incidents/${incident.incidentId}`)
                               }
                             >
-                              <Eye className="w-4 h-4" />
-                              Ver
+                              <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span className="hidden xs:inline">Ver</span>
                             </Button>
 
                             {user?.role === "autoridad" && (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="gap-2"
+                                className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm"
                                 onClick={() =>
                                   openDialog(incident, "priority")
                                 }
                               >
-                                <ArrowUpCircle className="w-4 h-4" />
-                                Prioridad
+                                <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <span className="hidden xs:inline">Prioridad</span>
+                                <span className="xs:hidden text-[10px]">Prior.</span>
                               </Button>
                             )}
 
@@ -609,25 +621,27 @@ export default function AdminIncidentsPage() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="gap-2"
+                                    className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm"
                                     onClick={() =>
                                       openDialog(incident, "status")
                                     }
                                   >
-                                    <Activity className="w-4 h-4" />
-                                    Estado
+                                    <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    <span className="hidden xs:inline">Estado</span>
+                                    <span className="xs:hidden text-[10px]">Est.</span>
                                   </Button>
 
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="gap-2 text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                                    className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
                                     onClick={() =>
                                       openDialog(incident, "close")
                                     }
                                   >
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    Cerrar
+                                    <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    <span className="hidden xs:inline">Cerrar</span>
+                                    <span className="xs:hidden text-[10px]">✓</span>
                                   </Button>
                                 </>
                               )}
