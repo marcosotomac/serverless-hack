@@ -51,12 +51,7 @@ def handler(event, context):
                 month = now.month
                 day = now.day
 
-            # Agregar campos de partición al incidente
-            incident["year"] = year
-            incident["month"] = month
-            incident["day"] = day
-
-            # Crear clave de partición
+            # Crear clave de partición (NO agregar year/month/day al incidente)
             partition_key = f"{year}/{month:02d}/{day:02d}"
             if partition_key not in partitions:
                 partitions[partition_key] = []
