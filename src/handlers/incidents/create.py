@@ -34,6 +34,10 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
     incident_id = str(uuid4())
     timestamp = int(time())
     note = (payload.get("note") or "").strip()
+    media_keys = payload.get("mediaKeys") or []
+    if not isinstance(media_keys, list):
+        return json_response(400, {"message": "mediaKeys debe ser una lista"})
+    media_keys = [str(key) for key in media_keys if key]
     history_entry = {
         "action": "CREATED",
         "by": claims["sub"],
@@ -55,6 +59,7 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         "createdAt": timestamp,
         "updatedAt": timestamp,
         "history": [history_entry],
+        "media": media_keys,
     }
     if note:
         incident_item["lastNote"] = note

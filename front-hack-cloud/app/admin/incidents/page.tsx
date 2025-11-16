@@ -142,7 +142,7 @@ export default function AdminIncidentsPage() {
     try {
       console.log("Fetching admin incidents...");
       console.log("Auth headers:", getAuthHeaders());
-      
+
       const response = await fetch(
         "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/admin/incidents",
         { headers: getAuthHeaders() }
@@ -156,12 +156,12 @@ export default function AdminIncidentsPage() {
         console.log("Admin incidents data:", data);
         console.log("Incidents array:", data.incidents);
         console.log("Incidents count:", data.incidents?.length || 0);
-        
+
         setIncidents(data.incidents || []);
       } else {
         const errorText = await response.text();
         console.error("Error fetching incidents:", response.status, errorText);
-        
+
         if (response.status === 401) {
           toast.error("Sesión expirada. Redirigiendo al login...");
           setTimeout(() => router.push("/auth/login"), 2000);
@@ -390,7 +390,9 @@ export default function AdminIncidentsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl sm:text-3xl font-bold">{stats.total}</div>
+              <div className="text-2xl sm:text-3xl font-bold">
+                {stats.total}
+              </div>
             </CardContent>
           </Card>
 
@@ -408,12 +410,18 @@ export default function AdminIncidentsPage() {
                     <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span className="hidden sm:inline">{config.label}</span>
                     <span className="sm:hidden text-[10px]">
-                      {status === "pendiente" ? "Pend." : status === "en_atencion" ? "Atenc." : "Resuel."}
+                      {status === "pendiente"
+                        ? "Pend."
+                        : status === "en_atencion"
+                        ? "Atenc."
+                        : "Resuel."}
                     </span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl sm:text-3xl font-bold">{stats[status]}</div>
+                  <div className="text-2xl sm:text-3xl font-bold">
+                    {stats[status]}
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -506,23 +514,24 @@ export default function AdminIncidentsPage() {
             ) : (
               <div className="space-y-4">
                 {filteredIncidents.map((incident) => {
-                  const statusConfig =
-                    STATUS_CONFIG[incident.status] ?? {
-                      label: incident.status || "Desconocido",
-                      color: "bg-gray-100 text-gray-700 border-gray-200",
-                      icon: AlertCircle,
-                      dotColor: "bg-gray-500",
-                    };
+                  const statusConfig = STATUS_CONFIG[incident.status] ?? {
+                    label: incident.status || "Desconocido",
+                    color: "bg-gray-100 text-gray-700 border-gray-200",
+                    icon: AlertCircle,
+                    dotColor: "bg-gray-500",
+                  };
                   const StatusIcon = statusConfig.icon;
                   const urgencyConfig =
-                    incident.urgency && URGENCY_CONFIG[incident.urgency as UrgencyLevel]
+                    incident.urgency &&
+                    URGENCY_CONFIG[incident.urgency as UrgencyLevel]
                       ? URGENCY_CONFIG[incident.urgency as UrgencyLevel]
                       : {
                           label: incident.urgency || "N/A",
                           color: "bg-gray-100 text-gray-700",
                         };
                   const priorityConfig =
-                    incident.priority && URGENCY_CONFIG[incident.priority as UrgencyLevel]
+                    incident.priority &&
+                    URGENCY_CONFIG[incident.priority as UrgencyLevel]
                       ? URGENCY_CONFIG[incident.priority as UrgencyLevel]
                       : {
                           label: incident.priority || "N/A",
@@ -551,33 +560,53 @@ export default function AdminIncidentsPage() {
                                 <div
                                   className={`w-2 h-2 rounded-full ${statusConfig.dotColor} animate-pulse`}
                                 />
-                                <span className="hidden xs:inline">{statusConfig.label}</span>
+                                <span className="hidden xs:inline">
+                                  {statusConfig.label}
+                                </span>
                                 <span className="xs:hidden text-[10px]">
                                   {statusConfig.label.substring(0, 4)}
                                 </span>
                               </Badge>
-                              <Badge className={`${urgencyConfig.color} text-xs`}>
-                                <span className="hidden xs:inline">U: {urgencyConfig.label}</span>
-                                <span className="xs:hidden">U:{urgencyConfig.label.charAt(0)}</span>
+                              <Badge
+                                className={`${urgencyConfig.color} text-xs`}
+                              >
+                                <span className="hidden xs:inline">
+                                  U: {urgencyConfig.label}
+                                </span>
+                                <span className="xs:hidden">
+                                  U:{urgencyConfig.label.charAt(0)}
+                                </span>
                               </Badge>
-                              <Badge className={`${priorityConfig.color} text-xs`}>
-                                <span className="hidden xs:inline">P: {priorityConfig.label}</span>
-                                <span className="xs:hidden">P:{priorityConfig.label.charAt(0)}</span>
+                              <Badge
+                                className={`${priorityConfig.color} text-xs`}
+                              >
+                                <span className="hidden xs:inline">
+                                  P: {priorityConfig.label}
+                                </span>
+                                <span className="xs:hidden">
+                                  P:{priorityConfig.label.charAt(0)}
+                                </span>
                               </Badge>
                             </div>
 
                             <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
                               <div className="flex items-center gap-1 sm:gap-1.5">
                                 <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                                <span className="truncate max-w-[120px] sm:max-w-none">{incident.location}</span>
+                                <span className="truncate max-w-[120px] sm:max-w-none">
+                                  {incident.location}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1 sm:gap-1.5">
                                 <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                                <span className="text-[10px] sm:text-xs">{formatDate(incident.createdAt)}</span>
+                                <span className="text-[10px] sm:text-xs">
+                                  {formatDate(incident.createdAt)}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1 sm:gap-1.5">
                                 <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
-                                <span className="text-[10px] sm:text-xs">{incident.reporterRole}</span>
+                                <span className="text-[10px] sm:text-xs">
+                                  {incident.reporterRole}
+                                </span>
                               </div>
                             </div>
 
@@ -604,13 +633,15 @@ export default function AdminIncidentsPage() {
                                 size="sm"
                                 variant="outline"
                                 className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm"
-                                onClick={() =>
-                                  openDialog(incident, "priority")
-                                }
+                                onClick={() => openDialog(incident, "priority")}
                               >
                                 <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                                <span className="hidden xs:inline">Prioridad</span>
-                                <span className="xs:hidden text-[10px]">Prior.</span>
+                                <span className="hidden xs:inline">
+                                  Prioridad
+                                </span>
+                                <span className="xs:hidden text-[10px]">
+                                  Prior.
+                                </span>
                               </Button>
                             )}
 
@@ -627,8 +658,12 @@ export default function AdminIncidentsPage() {
                                     }
                                   >
                                     <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    <span className="hidden xs:inline">Estado</span>
-                                    <span className="xs:hidden text-[10px]">Est.</span>
+                                    <span className="hidden xs:inline">
+                                      Estado
+                                    </span>
+                                    <span className="xs:hidden text-[10px]">
+                                      Est.
+                                    </span>
                                   </Button>
 
                                   <Button
@@ -640,8 +675,12 @@ export default function AdminIncidentsPage() {
                                     }
                                   >
                                     <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    <span className="hidden xs:inline">Cerrar</span>
-                                    <span className="xs:hidden text-[10px]">✓</span>
+                                    <span className="hidden xs:inline">
+                                      Cerrar
+                                    </span>
+                                    <span className="xs:hidden text-[10px]">
+                                      ✓
+                                    </span>
                                   </Button>
                                 </>
                               )}

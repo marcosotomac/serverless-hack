@@ -218,7 +218,9 @@ export default function DashboardPage() {
                 <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl font-bold gradient-text">AlertaUTEC</h1>
+                <h1 className="text-lg sm:text-xl font-bold gradient-text">
+                  AlertaUTEC
+                </h1>
                 <p className="text-xs text-slate-500">Dashboard</p>
               </div>
             </div>
@@ -243,8 +245,8 @@ export default function DashboardPage() {
                   <span className="xs:hidden">Admin</span>
                 </Button>
               )}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleLogout}
                 size="sm"
                 className="text-xs sm:text-sm px-2 sm:px-4"
@@ -283,7 +285,9 @@ export default function DashboardPage() {
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
+                  <div className="text-xl sm:text-2xl font-bold">
+                    {stats.total}
+                  </div>
                   <p className="text-xs text-slate-500 mt-1">
                     Reportes totales
                   </p>
@@ -294,7 +298,9 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">En Proceso</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">
+                En Proceso
+              </CardTitle>
               <Clock className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
@@ -315,7 +321,9 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Resueltos</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">
+                Resueltos
+              </CardTitle>
               <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
@@ -323,7 +331,9 @@ export default function DashboardPage() {
                 <Skeleton className="h-8 w-16" />
               ) : (
                 <>
-                  <div className="text-xl sm:text-2xl font-bold">{stats.resuelto}</div>
+                  <div className="text-xl sm:text-2xl font-bold">
+                    {stats.resuelto}
+                  </div>
                   <p className="text-xs text-slate-500 mt-1">
                     Reportes cerrados
                   </p>
@@ -336,7 +346,9 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg sm:text-xl">Acciones Rápidas</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">
+              Acciones Rápidas
+            </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
               Accede a las funciones principales de la plataforma
             </CardDescription>
@@ -393,7 +405,9 @@ export default function DashboardPage() {
         ) : recentIncidents.length > 0 ? (
           <Card className="mt-6">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg sm:text-xl">Incidentes Recientes</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">
+                Incidentes Recientes
+              </CardTitle>
               <CardDescription className="text-xs sm:text-sm">
                 Tus últimos reportes de incidentes
               </CardDescription>
@@ -433,15 +447,23 @@ export default function DashboardPage() {
                               className={`${statusConfig.color} text-[10px] sm:text-xs`}
                             >
                               <StatusIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
-                              <span className="hidden xs:inline">{statusConfig.label}</span>
-                              <span className="xs:hidden">{statusConfig.label.substring(0, 4)}</span>
+                              <span className="hidden xs:inline">
+                                {statusConfig.label}
+                              </span>
+                              <span className="xs:hidden">
+                                {statusConfig.label.substring(0, 4)}
+                              </span>
                             </Badge>
                             <Badge
                               variant="outline"
                               className={`${urgencyConfig.color} text-[10px] sm:text-xs`}
                             >
-                              <span className="hidden xs:inline">{urgencyConfig.label}</span>
-                              <span className="xs:hidden">{urgencyConfig.label.charAt(0)}</span>
+                              <span className="hidden xs:inline">
+                                {urgencyConfig.label}
+                              </span>
+                              <span className="xs:hidden">
+                                {urgencyConfig.label.charAt(0)}
+                              </span>
                             </Badge>
                           </div>
                         </div>

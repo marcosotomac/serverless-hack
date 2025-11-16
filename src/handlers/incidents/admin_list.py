@@ -13,12 +13,14 @@ PRIORITY_WEIGHTS = {"critica": 4, "alta": 3, "media": 2, "baja": 1}
 
 def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
     try:
-        get_authenticated_claims(event, allowed_roles={"personal", "autoridad"})
+        get_authenticated_claims(event, allowed_roles={
+                                 "personal", "autoridad"})
     except AuthError as exc:
         return json_response(401, {"message": str(exc)})
 
     params = event.get("queryStringParameters") or {}
-    statuses = _parse_list_param(params.get("status"), normalize_status, DEFAULT_ACTIVE_STATUSES)
+    statuses = _parse_list_param(params.get(
+        "status"), normalize_status, DEFAULT_ACTIVE_STATUSES)
     urgencies = _parse_list_param(params.get("urgency"), normalize_urgency)
     priorities = _parse_list_param(params.get("priority"), normalize_priority)
 
@@ -32,8 +34,10 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         reverse=True,
     )
 
-    stats = Counter(incident.get("status", "desconocido") for incident in incidents)
-    summary = {status: stats.get(status, 0) for status in ["pendiente", "en_atencion", "resuelto"]}
+    stats = Counter(incident.get("status", "desconocido")
+                    for incident in incidents)
+    summary = {status: stats.get(status, 0) for status in [
+        "pendiente", "en_atencion", "resuelto"]}
 
     return json_response(
         200,

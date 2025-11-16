@@ -23,7 +23,7 @@ export default function AdminTestPage() {
       );
 
       console.log("Response status:", response.status);
-      
+
       const text = await response.text();
       console.log("Raw response:", text);
 
@@ -66,7 +66,7 @@ export default function AdminTestPage() {
       );
 
       console.log("Response status:", response.status);
-      
+
       const text = await response.text();
       console.log("Raw response:", text);
 
@@ -115,7 +115,11 @@ export default function AdminTestPage() {
             <Button onClick={testAdminEndpoint} disabled={loading}>
               Test Admin Endpoint
             </Button>
-            <Button onClick={testRegularEndpoint} disabled={loading} variant="outline">
+            <Button
+              onClick={testRegularEndpoint}
+              disabled={loading}
+              variant="outline"
+            >
               Test Regular Endpoint
             </Button>
           </div>

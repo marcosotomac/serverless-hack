@@ -215,7 +215,9 @@ export default function Home() {
                   onClick={() => (window.location.href = "/auth/register")}
                 >
                   <Rocket className="mr-2 sm:mr-3 h-5 sm:h-6 w-5 sm:w-6 group-hover:rotate-12 transition-transform" />
-                  <span className="hidden sm:inline">Reportar Incidente Ahora</span>
+                  <span className="hidden sm:inline">
+                    Reportar Incidente Ahora
+                  </span>
                   <span className="sm:hidden">Reportar Ahora</span>
                   <ArrowRight className="ml-2 sm:ml-3 h-5 sm:h-6 w-5 sm:w-6 group-hover:translate-x-2 transition-transform" />
                 </Button>

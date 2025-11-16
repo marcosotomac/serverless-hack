@@ -38,6 +38,7 @@ provider:
     CONNECTIONS_TABLE: ${self:custom.connectionsTableName}
     CONNECTION_TTL_SECONDS: ${opt:connectionTtl, env:CONNECTION_TTL_SECONDS, '3600'}
     SAGEMAKER_ENDPOINT_NAME: ${opt:sagemakerEndpoint, env:SAGEMAKER_ENDPOINT_NAME, ''}
+    MEDIA_BUCKET_NAME: ${self:custom.mediaBucketName}
     WEBSOCKET_API_ENDPOINT:
       Fn::Join:
         - ""
@@ -132,6 +133,14 @@ functions:
       - httpApi:
           method: post
           path: /analytics/predictions
+  requestMediaUpload:
+    handler: src/handlers/incidents/request_upload.handler
+    description: Genera URLs prefirmadas para subir imágenes o videos de incidentes.
+    timeout: 10
+    events:
+      - httpApi:
+          method: post
+          path: /incidents/media/upload
   wsConnect:
     handler: src/handlers/ws/connect.handler
     description: Registers a WebSocket connection associated to the authenticated user.
@@ -162,6 +171,7 @@ custom:
   usersTableName: ${self:service}-users-${sls:stage}
   incidentsTableName: ${self:service}-incidents-${sls:stage}
   connectionsTableName: ${self:service}-connections-${sls:stage}
+  mediaBucketName: ${self:service}-media-${sls:stage}
 
 resources:
   Resources:
@@ -224,6 +234,21 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+    MediaBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.mediaBucketName}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders: ["*"]
+              AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"]
+              AllowedOrigins: ["*"]
+              MaxAge: 3000
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
         TimeToLiveSpecification:
           AttributeName: expiresAt
           Enabled: true

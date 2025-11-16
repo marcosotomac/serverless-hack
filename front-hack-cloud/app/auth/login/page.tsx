@@ -153,9 +153,6 @@ export default function LoginPage() {
               )}
             </Button>
 
-
-
-
             <div className="text-center text-sm text-slate-600 dark:text-slate-400">
               ¿No tienes una cuenta?{" "}
               <Link
@@ -211,9 +208,7 @@ export default function LoginPage() {
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold mb-1">&lt;5min</div>
-                <div className="text-sm text-blue-100">
-                  Tiempo de Respuesta
-                </div>
+                <div className="text-sm text-blue-100">Tiempo de Respuesta</div>
               </div>
             </div>
 
