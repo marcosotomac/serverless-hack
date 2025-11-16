@@ -1,5 +1,15 @@
 import json
+from decimal import Decimal
 from typing import Any, Dict, Optional
+
+
+class DecimalEncoder(json.JSONEncoder):
+    """JSON encoder that converts Decimal objects to int or float."""
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            # Convert to int if it's a whole number, otherwise float
+            return int(obj) if obj % 1 == 0 else float(obj)
+        return super(DecimalEncoder, self).default(obj)
 
 
 def json_response(
@@ -20,6 +30,6 @@ def json_response(
     return {
         "statusCode": status_code,
         "headers": default_headers,
-        "body": json.dumps(body),
+        "body": json.dumps(body, cls=DecimalEncoder),
     }
 

@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAuthHeaders, getUser, isAuthenticated } from "@/lib/auth";
+import { getAuthHeaders, getUser, isAuthenticated, getToken } from "@/lib/auth";
 import {
   AlertCircle,
   CheckCircle2,
@@ -115,8 +115,17 @@ export default function IncidentsPage() {
 
   const fetchIncidents = async () => {
     try {
+      const token = getToken();
+      if (!token) {
+        console.error("No token found");
+        setError("Sesión expirada. Por favor, inicia sesión nuevamente.");
+        router.push("/auth/login");
+        return;
+      }
+
       const authHeaders = getAuthHeaders();
       console.log("Auth headers:", authHeaders);
+      console.log("Token:", token.substring(0, 20) + "...");
       
       const response = await fetch(
         "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents",
@@ -131,19 +140,38 @@ export default function IncidentsPage() {
       );
 
       console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
         const data = await response.json();
         console.log("Incidents data:", data);
         setIncidents(data.incidents || []);
       } else {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData: any = {};
+        const contentType = response.headers.get("content-type");
+        
+        if (contentType && contentType.includes("application/json")) {
+          errorData = await response.json().catch(() => ({}));
+        } else {
+          const text = await response.text();
+          console.error("Error response (text):", text);
+          errorData = { message: text };
+        }
+        
         console.error("Error response:", response.status, errorData);
-        setError(errorData.message || "Error al cargar incidentes");
+        
+        if (response.status === 401) {
+          setError("Sesión expirada. Redirigiendo al login...");
+          setTimeout(() => router.push("/auth/login"), 2000);
+        } else if (response.status === 500) {
+          setError("Error del servidor. Posibles causas: 1) El backend no está desplegado, 2) Problemas con DynamoDB, 3) Token JWT inválido. Revisa los logs de CloudWatch.");
+        } else {
+          setError(errorData.message || `Error del servidor (${response.status})`);
+        }
       }
     } catch (err) {
       console.error("Error fetching incidents:", err);
-      setError("Error de conexión. Verifica tu conexión a internet.");
+      setError("Error de conexión. Verifica tu conexión a internet y que el backend esté desplegado.");
     } finally {
       setLoading(false);
     }

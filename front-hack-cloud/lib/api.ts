@@ -24,6 +24,7 @@ export async function apiRequest<T = any>(
 ): Promise<{ data?: T; error?: string }> {
   try {
     const response = await fetch(endpoint, {
+      mode: "cors",
       ...options,
       headers: {
         "Content-Type": "application/json",
