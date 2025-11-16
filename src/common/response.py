@@ -4,12 +4,15 @@ from typing import Any, Dict, Optional
 
 
 class DecimalEncoder(json.JSONEncoder):
-    """JSON encoder that converts Decimal objects to int or float."""
+    """JSON encoder that converts Decimal objects to int or float, and sets to lists."""
 
     def default(self, obj):
         if isinstance(obj, Decimal):
             # Convert to int if it's a whole number, otherwise float
             return int(obj) if obj % 1 == 0 else float(obj)
+        if isinstance(obj, set):
+            # Convert sets to lists for JSON serialization
+            return list(obj)
         return super(DecimalEncoder, self).default(obj)
 
 
