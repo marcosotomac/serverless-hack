@@ -42,7 +42,7 @@ Los usuarios deben poder crear reportes de incidentes indicando tipo, ubicación
 descripción y nivel de urgencia.
 Cada incidente debe almacenarse en una base de datos serverless  (por ejemplo,
 DynamoDB).
-Se debe generar automáticamente un identificador único por reporte.
+Se debe generar   wss://z3k9ammp3f.execute-api.us-east-1.amazonaws.com/devautomáticamente un identificador único por reporte.
 3. Actualización y seguimiento en tiempo real
 El sistema debe actualizar el estado de los incidentes en tiempo real utilizando
 WebSockets  a través de API Gateway .

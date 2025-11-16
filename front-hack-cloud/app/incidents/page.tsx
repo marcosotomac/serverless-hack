@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAuthHeaders, getUser, isAuthenticated, getToken } from "@/lib/auth";
+import { useWebSocket } from "@/lib/websocket";
+import { ConnectionStatus } from "@/components/connection-status";
+import { toast } from "sonner";
 import {
   AlertCircle,
   CheckCircle2,
@@ -25,6 +28,8 @@ import {
   Filter,
   TrendingUp,
   Activity,
+  Home,
+  ArrowLeft,
 } from "lucide-react";
 
 type IncidentStatus = "pendiente" | "en_atencion" | "resuelto";
@@ -103,17 +108,9 @@ export default function IncidentsPage() {
   const [filter, setFilter] = useState<IncidentStatus | "all">("all");
   const [error, setError] = useState("");
   const user = getUser();
+  const { subscribe } = useWebSocket();
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push("/auth/login");
-      return;
-    }
-
-    fetchIncidents();
-  }, [router]);
-
-  const fetchIncidents = async () => {
+  const fetchIncidents = useCallback(async () => {
     try {
       const token = getToken();
       if (!token) {
@@ -126,7 +123,7 @@ export default function IncidentsPage() {
       const authHeaders = getAuthHeaders();
       console.log("Auth headers:", authHeaders);
       console.log("Token:", token.substring(0, 20) + "...");
-      
+
       const response = await fetch(
         "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents",
         {
@@ -140,7 +137,10 @@ export default function IncidentsPage() {
       );
 
       console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -149,7 +149,7 @@ export default function IncidentsPage() {
       } else {
         let errorData: any = {};
         const contentType = response.headers.get("content-type");
-        
+
         if (contentType && contentType.includes("application/json")) {
           errorData = await response.json().catch(() => ({}));
         } else {
@@ -157,25 +157,86 @@ export default function IncidentsPage() {
           console.error("Error response (text):", text);
           errorData = { message: text };
         }
-        
+
         console.error("Error response:", response.status, errorData);
-        
+
         if (response.status === 401) {
           setError("Sesión expirada. Redirigiendo al login...");
           setTimeout(() => router.push("/auth/login"), 2000);
         } else if (response.status === 500) {
-          setError("Error del servidor. Posibles causas: 1) El backend no está desplegado, 2) Problemas con DynamoDB, 3) Token JWT inválido. Revisa los logs de CloudWatch.");
+          setError(
+            "Error del servidor. Posibles causas: 1) El backend no está desplegado, 2) Problemas con DynamoDB, 3) Token JWT inválido. Revisa los logs de CloudWatch."
+          );
         } else {
-          setError(errorData.message || `Error del servidor (${response.status})`);
+          setError(
+            errorData.message || `Error del servidor (${response.status})`
+          );
         }
       }
     } catch (err) {
       console.error("Error fetching incidents:", err);
-      setError("Error de conexión. Verifica tu conexión a internet y que el backend esté desplegado.");
+      setError(
+        "Error de conexión. Verifica tu conexión a internet y que el backend esté desplegado."
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  // Subscribe to WebSocket events
+  useEffect(() => {
+    const unsubscribe = subscribe((message) => {
+      console.log("WebSocket event received:", message);
+
+      switch (message.type) {
+        case "incident.created":
+          toast.success("Nuevo incidente reportado", {
+            description: `${message.data.incident.type} - ${message.data.incident.location}`,
+          });
+          fetchIncidents();
+          break;
+
+        case "incident.updated":
+          toast.info("Incidente actualizado", {
+            description: `${message.data.incident.incidentId} - ${
+              message.data.note || "Sin nota"
+            }`,
+          });
+          fetchIncidents();
+          break;
+
+        case "incident.priority":
+          toast.warning("Prioridad actualizada", {
+            description: `${message.data.incident.incidentId} - Prioridad: ${message.data.incident.priority}`,
+          });
+          fetchIncidents();
+          break;
+
+        case "incident.closed":
+          toast.success("Incidente cerrado", {
+            description: `${message.data.incident.incidentId}`,
+          });
+          fetchIncidents();
+          break;
+
+        default:
+          console.log("Unknown event type:", message.type);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [subscribe, fetchIncidents]);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/auth/login");
+      return;
+    }
+
+    fetchIncidents();
+  }, [router, fetchIncidents]);
 
   const filteredIncidents =
     filter === "all" ? incidents : incidents.filter((i) => i.status === filter);
@@ -208,13 +269,24 @@ export default function IncidentsPage() {
       <div className="container max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Mis Incidentes
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Gestiona y da seguimiento a tus reportes
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => router.push("/dashboard")}
+              title="Volver al Dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Mis Incidentes
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Gestiona y da seguimiento a tus reportes
+              </p>
+            </div>
+            <ConnectionStatus />
           </div>
 
           <Button
@@ -303,22 +375,26 @@ export default function IncidentsPage() {
         >
           <Card className="border-2 shadow-lg">
             <CardContent className="pt-6">
-              <TabsList className="grid w-full grid-cols-4 gap-2">
-                <TabsTrigger value="all" className="gap-2">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2">
+                <TabsTrigger value="all" className="gap-1 sm:gap-2">
                   <Filter className="w-4 h-4" />
-                  Todos
+                  <span className="hidden sm:inline">Todos</span>
+                  <span className="sm:hidden">All</span>
                 </TabsTrigger>
-                <TabsTrigger value="pendiente" className="gap-2">
+                <TabsTrigger value="pendiente" className="gap-1 sm:gap-2">
                   <Clock className="w-4 h-4" />
-                  Pendientes
+                  <span className="hidden sm:inline">Pendientes</span>
+                  <span className="sm:hidden text-xs">Pend.</span>
                 </TabsTrigger>
-                <TabsTrigger value="en_atencion" className="gap-2">
+                <TabsTrigger value="en_atencion" className="gap-1 sm:gap-2">
                   <Activity className="w-4 h-4" />
-                  En Atención
+                  <span className="hidden sm:inline">En Atención</span>
+                  <span className="sm:hidden text-xs">Atenc.</span>
                 </TabsTrigger>
-                <TabsTrigger value="resuelto" className="gap-2">
+                <TabsTrigger value="resuelto" className="gap-1 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4" />
-                  Resueltos
+                  <span className="hidden sm:inline">Resueltos</span>
+                  <span className="sm:hidden text-xs">Resuel.</span>
                 </TabsTrigger>
               </TabsList>
             </CardContent>

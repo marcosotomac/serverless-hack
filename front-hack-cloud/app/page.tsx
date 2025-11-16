@@ -121,22 +121,23 @@ export default function Home() {
                   FAQ
                 </a>
               </nav>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <ThemeToggle />
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hidden sm:flex"
+                  className="hidden sm:inline-flex"
                   onClick={() => (window.location.href = "/auth/login")}
                 >
                   Iniciar Sesión
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm px-3 sm:px-4"
                   onClick={() => (window.location.href = "/auth/register")}
                 >
-                  Registrarse
+                  <span className="hidden sm:inline">Registrarse</span>
+                  <span className="sm:hidden">Registro</span>
                 </Button>
               </div>
             </div>
@@ -157,9 +158,9 @@ export default function Home() {
                 </span>
               </Badge>
 
-              <h1 className="text-6xl md:text-8xl font-black tracking-tight text-slate-900 dark:text-white mb-8 leading-tight">
-                <span className="block mb-4">Reporta y Gestiona</span>
-                <span className="block mb-4">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight text-slate-900 dark:text-white mb-6 md:mb-8 leading-tight">
+                <span className="block mb-2 md:mb-4">Reporta y Gestiona</span>
+                <span className="block mb-2 md:mb-4">
                   <TypingText
                     texts={[
                       "Incidentes 🚨",
@@ -182,7 +183,7 @@ export default function Home() {
                 </span>
               </h1>
 
-              <p className="text-2xl text-slate-700 dark:text-slate-300 mb-12 max-w-3xl leading-relaxed font-medium">
+              <p className="text-lg sm:text-xl md:text-2xl text-slate-700 dark:text-slate-300 mb-8 md:mb-12 max-w-3xl leading-relaxed font-medium px-4">
                 AlertaUTEC conecta a la comunidad universitaria con las
                 autoridades para resolver incidentes de forma{" "}
                 <span className="relative inline-block">
@@ -207,23 +208,24 @@ export default function Home() {
                 </span>
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-6 mb-16">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-12 md:mb-16 w-full sm:w-auto px-4">
                 <Button
                   size="lg"
-                  className="text-lg px-8 py-7 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl hover:shadow-blue-500/50 transform hover:scale-105 transition-all duration-300 group"
+                  className="text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl hover:shadow-blue-500/50 transform hover:scale-105 transition-all duration-300 group w-full sm:w-auto"
                   onClick={() => (window.location.href = "/auth/register")}
                 >
-                  <Rocket className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                  Reportar Incidente Ahora
-                  <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform" />
+                  <Rocket className="mr-2 sm:mr-3 h-5 sm:h-6 w-5 sm:w-6 group-hover:rotate-12 transition-transform" />
+                  <span className="hidden sm:inline">Reportar Incidente Ahora</span>
+                  <span className="sm:hidden">Reportar Ahora</span>
+                  <ArrowRight className="ml-2 sm:ml-3 h-5 sm:h-6 w-5 sm:w-6 group-hover:translate-x-2 transition-transform" />
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="text-lg px-8 py-7 border-3 backdrop-blur-sm bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 transform hover:scale-105 transition-all duration-300"
+                  className="text-base sm:text-lg px-6 sm:px-8 py-6 sm:py-7 border-3 backdrop-blur-sm bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 transform hover:scale-105 transition-all duration-300 w-full sm:w-auto"
                   onClick={() => (window.location.href = "/auth/login")}
                 >
-                  <Target className="mr-2 h-6 w-6" />
+                  <Target className="mr-2 h-5 sm:h-6 w-5 sm:w-6" />
                   Ver Demo Interactiva
                 </Button>
               </div>
@@ -285,11 +287,20 @@ export default function Home() {
             </div>
 
             <Tabs defaultValue="all" className="max-w-6xl mx-auto">
-              <TabsList className="grid w-full grid-cols-4 mb-8">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-8">
                 <TabsTrigger value="all">Todas</TabsTrigger>
-                <TabsTrigger value="tech">Tecnología</TabsTrigger>
-                <TabsTrigger value="security">Seguridad</TabsTrigger>
-                <TabsTrigger value="analytics">Análisis</TabsTrigger>
+                <TabsTrigger value="tech">
+                  <span className="hidden sm:inline">Tecnología</span>
+                  <span className="sm:hidden">Tech</span>
+                </TabsTrigger>
+                <TabsTrigger value="security">
+                  <span className="hidden sm:inline">Seguridad</span>
+                  <span className="sm:hidden">Segur.</span>
+                </TabsTrigger>
+                <TabsTrigger value="analytics">
+                  <span className="hidden sm:inline">Análisis</span>
+                  <span className="sm:hidden">Análi.</span>
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="all" className="space-y-6">
@@ -443,7 +454,7 @@ export default function Home() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <div className="text-2xl font-bold text-blue-600 mb-1">
                           85%

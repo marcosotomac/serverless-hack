@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 
 class DecimalEncoder(json.JSONEncoder):
     """JSON encoder that converts Decimal objects to int or float."""
+
     def default(self, obj):
         if isinstance(obj, Decimal):
             # Convert to int if it's a whole number, otherwise float
@@ -32,4 +33,3 @@ def json_response(
         "headers": default_headers,
         "body": json.dumps(body, cls=DecimalEncoder),
     }
-

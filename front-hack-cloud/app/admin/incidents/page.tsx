@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getAuthHeaders, getUser, isAuthenticated } from "@/lib/auth";
+import { useWebSocket } from "@/lib/websocket";
+import { ConnectionStatus } from "@/components/connection-status";
+import { toast } from "sonner";
 import {
   AlertCircle,
   CheckCircle2,
@@ -40,6 +43,8 @@ import {
   XCircle,
   Search,
   Eye,
+  Home,
+  ArrowLeft,
 } from "lucide-react";
 
 type IncidentStatus = "pendiente" | "en_atencion" | "resuelto";
@@ -131,6 +136,71 @@ export default function AdminIncidentsPage() {
     }
   );
   const user = getUser();
+  const { subscribe } = useWebSocket();
+
+  const fetchIncidents = useCallback(async () => {
+    try {
+      const response = await fetch(
+        "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/admin/incidents",
+        { headers: getAuthHeaders() }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setIncidents(data.incidents || []);
+      } else {
+        console.error("Error fetching incidents");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Subscribe to WebSocket events
+  useEffect(() => {
+    const unsubscribe = subscribe((message) => {
+      console.log("Admin WebSocket event received:", message);
+
+      switch (message.type) {
+        case "incident.created":
+          toast.info("Nuevo incidente reportado", {
+            description: `${message.data.incident.type} - ${message.data.incident.location}`,
+          });
+          fetchIncidents();
+          break;
+
+        case "incident.updated":
+          toast.info("Incidente actualizado", {
+            description: `${message.data.incident.incidentId}`,
+          });
+          fetchIncidents();
+          break;
+
+        case "incident.priority":
+          toast.warning("Prioridad modificada", {
+            description: `${message.data.incident.incidentId} - ${message.data.incident.priority}`,
+          });
+          fetchIncidents();
+          break;
+
+        case "incident.closed":
+          toast.success("Incidente cerrado", {
+            description: `${message.data.incident.incidentId}`,
+          });
+          fetchIncidents();
+          break;
+
+        default:
+          console.log("Unknown event type:", message.type);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [subscribe, fetchIncidents]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -145,25 +215,7 @@ export default function AdminIncidentsPage() {
     }
 
     fetchIncidents();
-  }, [router]);
-
-  const fetchIncidents = async () => {
-    try {
-      const response = await fetch(
-        "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/admin/incidents",
-        { headers: getAuthHeaders() }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setIncidents(data.incidents || []);
-      }
-    } catch (err) {
-      console.error("Error fetching incidents:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [router, fetchIncidents]);
 
   const openDialog = (
     incident: Incident,
@@ -265,10 +317,18 @@ export default function AdminIncidentsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 mb-8">
           <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => router.push("/dashboard")}
+              title="Volver al Dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <div className="p-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl shadow-lg">
               <Shield className="w-8 h-8 text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Panel Administrativo
               </h1>
@@ -276,6 +336,7 @@ export default function AdminIncidentsPage() {
                 Gestión y seguimiento de todos los incidentes
               </p>
             </div>
+            <ConnectionStatus />
           </div>
 
           {/* Search Bar */}
@@ -353,22 +414,26 @@ export default function AdminIncidentsPage() {
         >
           <Card className="border-2 shadow-lg">
             <CardContent className="pt-6">
-              <TabsList className="grid w-full grid-cols-4 gap-2">
-                <TabsTrigger value="all" className="gap-2">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2">
+                <TabsTrigger value="all" className="gap-1 sm:gap-2">
                   <Filter className="w-4 h-4" />
-                  Todos
+                  <span className="hidden sm:inline">Todos</span>
+                  <span className="sm:hidden">All</span>
                 </TabsTrigger>
-                <TabsTrigger value="pendiente" className="gap-2">
+                <TabsTrigger value="pendiente" className="gap-1 sm:gap-2">
                   <Clock className="w-4 h-4" />
-                  Pendientes
+                  <span className="hidden sm:inline">Pendientes</span>
+                  <span className="sm:hidden text-xs">Pend.</span>
                 </TabsTrigger>
-                <TabsTrigger value="en_atencion" className="gap-2">
+                <TabsTrigger value="en_atencion" className="gap-1 sm:gap-2">
                   <Activity className="w-4 h-4" />
-                  En Atención
+                  <span className="hidden sm:inline">En Atención</span>
+                  <span className="sm:hidden text-xs">Atenc.</span>
                 </TabsTrigger>
-                <TabsTrigger value="resuelto" className="gap-2">
+                <TabsTrigger value="resuelto" className="gap-1 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4" />
-                  Resueltos
+                  <span className="hidden sm:inline">Resueltos</span>
+                  <span className="sm:hidden text-xs">Resuel.</span>
                 </TabsTrigger>
               </TabsList>
             </CardContent>

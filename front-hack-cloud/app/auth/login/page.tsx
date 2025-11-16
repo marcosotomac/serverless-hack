@@ -198,7 +198,7 @@ export default function LoginPage() {
             </p>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-6 pt-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8">
               <div className="text-center">
                 <div className="text-3xl font-bold mb-1">500+</div>
                 <div className="text-sm text-blue-100">
@@ -210,8 +210,10 @@ export default function LoginPage() {
                 <div className="text-sm text-blue-100">Disponibilidad</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold mb-1">1.2k</div>
-                <div className="text-sm text-blue-100">Usuarios Activos</div>
+                <div className="text-3xl font-bold mb-1">&lt;5min</div>
+                <div className="text-sm text-blue-100">
+                  Tiempo de Respuesta
+                </div>
               </div>
             </div>
 
