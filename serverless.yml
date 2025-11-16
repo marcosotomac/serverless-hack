@@ -22,7 +22,7 @@ provider:
     USERS_TABLE: ${self:custom.usersTableName}
     AUTH_SECRET: ${opt:authSecret, env:AUTH_SECRET, 'dev-secret'}
   iam:
-    role: arn:aws:iam::967418674262:role/LabRole
+    role: arn:aws:iam::590953801135:role/LabRole
 
 functions:
   register:
