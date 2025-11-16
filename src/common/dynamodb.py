@@ -230,7 +230,7 @@ def add_significance_vote(
                 ":voterSet": {voter},
                 ":voter": voter,
             },
-            ConditionExpression="attribute_not_exists(significanceVoters) OR attribute_not_contains(significanceVoters, :voter)",
+            ConditionExpression="attribute_not_exists(significanceVoters) OR NOT contains(significanceVoters, :voter)",
             ReturnValues="ALL_NEW",
         )
         return response["Attributes"]
