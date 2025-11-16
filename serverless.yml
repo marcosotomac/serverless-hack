@@ -1,3 +1,4 @@
+org: marcosotomac
 service: alertautec-auth
 
 frameworkVersion: "3"
@@ -7,6 +8,8 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: us-east-1
   runtime: python3.11
+  memorySize: 1024
+  timeout: 30
   httpApi:
     cors:
       allowedOrigins:
@@ -21,18 +24,7 @@ provider:
     USERS_TABLE: ${self:custom.usersTableName}
     AUTH_SECRET: ${opt:authSecret, env:AUTH_SECRET, 'dev-secret'}
   iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - dynamodb:PutItem
-            - dynamodb:GetItem
-            - dynamodb:UpdateItem
-            - dynamodb:Scan
-          Resource:
-            - Fn::GetAtt:
-                - UsersTable
-                - Arn
+    role: arn:aws:iam::967418674262:role/LabRole
 
 functions:
   register:
