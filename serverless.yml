@@ -250,9 +250,10 @@ package:
 custom:
   pythonRequirements:
     dockerizePip: true
-    layer: true
+    layer: false
     slim: true
     strip: false
+    zip: true
   usersTableName: ${self:service}-users-${sls:stage}
   incidentsTableName: ${self:service}-incidents-${sls:stage}
   connectionsTableName: ${self:service}-connections-${sls:stage}
