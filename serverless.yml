@@ -39,6 +39,9 @@ provider:
     CONNECTION_TTL_SECONDS: ${opt:connectionTtl, env:CONNECTION_TTL_SECONDS, '3600'}
     SAGEMAKER_ENDPOINT_NAME: ${opt:sagemakerEndpoint, env:SAGEMAKER_ENDPOINT_NAME, ''}
     MEDIA_BUCKET_NAME: ${self:custom.mediaBucketName}
+    ANALYTICS_DATA_BUCKET: ${self:custom.analyticsDataBucketName}
+    ANALYTICS_RESULTS_BUCKET: ${self:custom.analyticsResultsBucketName}
+    GLUE_DATABASE: ${self:custom.glueDatabase}
     WEBSOCKET_API_ENDPOINT:
       Fn::Join:
         - ""
@@ -172,6 +175,31 @@ functions:
       - httpApi:
           method: get
           path: /staff
+  syncIncidentsToS3:
+    handler: src/handlers/analytics/sync_to_s3.handler
+    description: Sincroniza incidentes de DynamoDB a S3 para análisis con Athena.
+    timeout: 300
+    memorySize: 2048
+    events:
+      - schedule: rate(1 hour)
+  getAnalytics:
+    handler: src/handlers/analytics/get_analytics.handler
+    description: Ejecuta queries predefinidos en Athena y retorna métricas (solo autoridad).
+    timeout: 60
+    memorySize: 1024
+    events:
+      - httpApi:
+          method: get
+          path: /analytics/incidents
+  exportIncidents:
+    handler: src/handlers/analytics/export.handler
+    description: Exporta incidentes a PDF, Excel o CSV (solo autoridad).
+    timeout: 120
+    memorySize: 2048
+    events:
+      - httpApi:
+          method: post
+          path: /analytics/export
   predictIncidents:
     handler: src/handlers/analytics/predict.handler
     description: Consulta SageMaker para identificar patrones y predicciones de riesgos.
@@ -206,12 +234,26 @@ package:
   patterns:
     - "!node_modules/**"
     - "!venv/**"
+    - "!front-hack-cloud/**"
+    - "!.git/**"
+    - "!*.md"
+
+plugins:
+  - serverless-python-requirements
 
 custom:
+  pythonRequirements:
+    dockerizePip: true
+    layer: true
+    slim: true
+    strip: false
   usersTableName: ${self:service}-users-${sls:stage}
   incidentsTableName: ${self:service}-incidents-${sls:stage}
   connectionsTableName: ${self:service}-connections-${sls:stage}
   mediaBucketName: ${self:service}-media-${sls:stage}
+  analyticsDataBucketName: ${self:service}-analytics-data-${sls:stage}
+  analyticsResultsBucketName: ${self:service}-analytics-results-${sls:stage}
+  glueDatabase: ${self:service}_analytics_db_${sls:stage}
 
 resources:
   Resources:
@@ -292,3 +334,86 @@ resources:
           BlockPublicPolicy: true
           IgnorePublicAcls: true
           RestrictPublicBuckets: true
+    
+    AnalyticsDataBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.analyticsDataBucketName}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+    
+    AnalyticsResultsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.analyticsResultsBucketName}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+    
+    GlueDatabase:
+      Type: AWS::Glue::Database
+      Properties:
+        CatalogId: !Ref AWS::AccountId
+        DatabaseInput:
+          Name: ${self:custom.glueDatabase}
+          Description: Database for incidents analytics
+    
+    GlueIncidentsTable:
+      Type: AWS::Glue::Table
+      Properties:
+        CatalogId: !Ref AWS::AccountId
+        DatabaseName: !Ref GlueDatabase
+        TableInput:
+          Name: incidents
+          Description: Incidents data for analytics
+          StorageDescriptor:
+            Location: !Sub "s3://${self:custom.analyticsDataBucketName}/incidents/"
+            InputFormat: org.apache.hadoop.mapred.TextInputFormat
+            OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+            SerdeInfo:
+              SerializationLibrary: org.openx.data.jsonserde.JsonSerDe
+            Columns:
+              - Name: incidentId
+                Type: string
+              - Name: type
+                Type: string
+              - Name: location
+                Type: string
+              - Name: description
+                Type: string
+              - Name: urgency
+                Type: string
+              - Name: priority
+                Type: string
+              - Name: status
+                Type: string
+              - Name: reportedBy
+                Type: string
+              - Name: reporterRole
+                Type: string
+              - Name: assignedTo
+                Type: string
+              - Name: createdAt
+                Type: string
+              - Name: updatedAt
+                Type: string
+              - Name: significanceCount
+                Type: int
+              - Name: year
+                Type: int
+              - Name: month
+                Type: int
+              - Name: day
+                Type: int
+          PartitionKeys:
+            - Name: year
+              Type: int
+            - Name: month
+              Type: int
+            - Name: day
+              Type: int

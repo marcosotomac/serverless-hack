@@ -14,7 +14,7 @@ def handler(event, context):
     """
     try:
         staff_users = list_users_by_role("personal")
-        
+
         # Simplificar la respuesta solo con datos necesarios
         staff_list = [
             {
@@ -23,7 +23,7 @@ def handler(event, context):
             }
             for user in staff_users
         ]
-        
+
         return json_response(200, {
             "staff": staff_list,
             "count": len(staff_list)

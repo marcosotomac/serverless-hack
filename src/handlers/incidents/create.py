@@ -25,7 +25,8 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
         return json_response(400, {"message": "Body must be JSON"})
 
     required_fields = ["type", "location", "description", "urgency"]
-    missing = [field for field in required_fields if not (payload.get(field) or "").strip()]
+    missing = [field for field in required_fields if not (
+        payload.get(field) or "").strip()]
     if missing:
         return json_response(400, {"message": f"Faltan campos: {', '.join(missing)}"})
 
@@ -70,7 +71,8 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
     if note:
         incident_item["lastNote"] = note
     put_incident(incident_item)
-    broadcast_to_roles({"personal", "autoridad"}, "incident.created", {"incident": incident_item})
+    broadcast_to_roles({"personal", "autoridad"}, "incident.created", {
+                       "incident": incident_item})
     notify_user(claims["sub"], "incident.created", {"incident": incident_item})
 
     return json_response(

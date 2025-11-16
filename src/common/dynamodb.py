@@ -90,6 +90,13 @@ def list_incidents(statuses: Optional[Iterable[str]] = None) -> List[Dict[str, A
     return items
 
 
+def list_all_incidents() -> List[Dict[str, Any]]:
+    """
+    Lista todos los incidentes sin filtros (para analytics)
+    """
+    return list_incidents(statuses=None)
+
+
 def update_incident(
     incident_id: str,
     attributes: Dict[str, Any],

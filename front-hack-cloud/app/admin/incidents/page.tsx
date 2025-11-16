@@ -362,6 +362,15 @@ export default function AdminIncidentsPage() {
               </p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => router.push("/analytics")}
+                className="hidden sm:flex gap-1"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Analíticas
+              </Button>
               <ThemeToggle />
             </div>
           </div>
