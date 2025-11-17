@@ -25,7 +25,8 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
     except json.JSONDecodeError:
         return json_response(400, {"message": "Body must be JSON"})
 
-    analysis_type = payload.get("analysisType", "comprehensive")  # comprehensive, zones, times, trends
+    # comprehensive, zones, times, trends
+    analysis_type = payload.get("analysisType", "comprehensive")
     days_back = int(payload.get("daysBack", 90))
     target_location = (payload.get("location") or "").strip()
     target_hour = payload.get("hour")
@@ -39,7 +40,8 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
 
     # Obtener incidentes y filtrar por rango de fechas
     all_incidents = list_incidents()
-    cutoff_timestamp = int((datetime.now() - timedelta(days=days_back)).timestamp())
+    cutoff_timestamp = int(
+        (datetime.now() - timedelta(days=days_back)).timestamp())
     incidents = [
         inc for inc in all_incidents
         if int(inc.get("createdAt", 0)) >= cutoff_timestamp
@@ -47,21 +49,26 @@ def handler(event: Dict[str, Any], _) -> Dict[str, Any]:
 
     # Construir estadísticas históricas
     historical_stats = _build_historical_stats(incidents)
-    
+
     # Análisis de zonas de riesgo
-    risk_zones = _analyze_risk_zones(incidents) if analysis_type in ["comprehensive", "zones"] else []
-    
+    risk_zones = _analyze_risk_zones(incidents) if analysis_type in [
+        "comprehensive", "zones"] else []
+
     # Análisis de horarios críticos
-    critical_times = _analyze_critical_times(incidents) if analysis_type in ["comprehensive", "times"] else {}
-    
+    critical_times = _analyze_critical_times(incidents) if analysis_type in [
+        "comprehensive", "times"] else {}
+
     # Análisis de tendencias de recurrencia
-    recurrence_trends = _analyze_recurrence(incidents) if analysis_type in ["comprehensive", "trends"] else {}
-    
+    recurrence_trends = _analyze_recurrence(incidents) if analysis_type in [
+        "comprehensive", "trends"] else {}
+
     # Predicciones por ubicación
-    location_predictions = _predict_by_location(incidents) if analysis_type in ["comprehensive", "zones"] else []
-    
+    location_predictions = _predict_by_location(incidents) if analysis_type in [
+        "comprehensive", "zones"] else []
+
     # Generar recomendaciones
-    recommendations = _generate_recommendations(risk_zones, critical_times, incidents)
+    recommendations = _generate_recommendations(
+        risk_zones, critical_times, incidents)
 
     features = {
         "targetLocation": target_location or None,
@@ -123,10 +130,11 @@ def _build_historical_stats(incidents: List[Dict[str, Any]]) -> Dict[str, List[D
     return {
         "countsByType": _format_counter(type_counter, "type"),
         "countsByLocation": _format_counter(location_counter, "location"),
-        "countsByHour": [{ "hour": hour, "count": count } for hour, count in hour_counter.most_common()],
-        "countsByDayOfWeek": [{ "day": day, "count": count } for day, count in day_counter.most_common()],
+        "countsByHour": [{"hour": hour, "count": count} for hour, count in hour_counter.most_common()],
+        "countsByDayOfWeek": [{"day": day, "count": count} for day, count in day_counter.most_common()],
         "countsByLocationAndType": [
-            {"location": location, "topTypes": _format_counter(counter, "type")}
+            {"location": location,
+                "topTypes": _format_counter(counter, "type")}
             for location, counter in location_type_counter.items()
         ],
     }
@@ -187,24 +195,24 @@ def _analyze_risk_zones(incidents: List[Dict[str, Any]]) -> List[Dict[str, Any]]
         "unresolved_count": 0,
         "incident_types": Counter()
     })
-    
+
     for incident in incidents:
         location = incident.get("location", "Desconocido")
         urgency = incident.get("urgency", "baja")
         priority = incident.get("priority", "baja")
         status = incident.get("status", "pendiente")
         inc_type = incident.get("type", "otro")
-        
+
         location_stats[location]["incident_count"] += 1
         location_stats[location]["incident_types"][inc_type] += 1
-        
+
         if urgency == "alta":
             location_stats[location]["high_urgency_count"] += 1
         if priority == "alta":
             location_stats[location]["high_priority_count"] += 1
         if status != "resuelto":
             location_stats[location]["unresolved_count"] += 1
-    
+
     risk_zones = []
     for location, stats in location_stats.items():
         risk_score = (
@@ -215,13 +223,14 @@ def _analyze_risk_zones(incidents: List[Dict[str, Any]]) -> List[Dict[str, Any]]
         )
         max_score = max(1, len(incidents) * 2)
         normalized_score = min(100, (risk_score / max_score) * 100)
-        
+
         risk_level = "critical" if normalized_score >= 70 else \
                      "high" if normalized_score >= 50 else \
                      "medium" if normalized_score >= 30 else "low"
-        
-        most_common_type = stats["incident_types"].most_common(1)[0] if stats["incident_types"] else ("otro", 0)
-        
+
+        most_common_type = stats["incident_types"].most_common(
+            1)[0] if stats["incident_types"] else ("otro", 0)
+
         risk_zones.append({
             "location": location,
             "risk_score": round(normalized_score, 2),
@@ -233,7 +242,7 @@ def _analyze_risk_zones(incidents: List[Dict[str, Any]]) -> List[Dict[str, Any]]
             "most_common_incident": most_common_type[0],
             "prediction": f"Se esperan ~{round(stats['incident_count'] / 3)} incidentes en los próximos 30 días"
         })
-    
+
     risk_zones.sort(key=lambda x: x["risk_score"], reverse=True)
     return risk_zones[:10]
 
@@ -242,43 +251,45 @@ def _analyze_critical_times(incidents: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Identifica horarios críticos para incidentes"""
     hour_stats = defaultdict(lambda: {"count": 0, "types": Counter()})
     day_stats = defaultdict(lambda: {"count": 0, "types": Counter()})
-    
+
     for incident in incidents:
         timestamp = incident.get("createdAt")
         inc_type = incident.get("type", "otro")
-        
+
         if timestamp:
             try:
                 dt = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
                 hour = dt.hour
                 day = dt.strftime("%A")
-                
+
                 hour_stats[hour]["count"] += 1
                 hour_stats[hour]["types"][inc_type] += 1
                 day_stats[day]["count"] += 1
                 day_stats[day]["types"][inc_type] += 1
             except:
                 continue
-    
+
     peak_hours = []
     for hour, stats in sorted(hour_stats.items(), key=lambda x: x[1]["count"], reverse=True)[:5]:
-        most_common = stats["types"].most_common(1)[0] if stats["types"] else ("otro", 0)
+        most_common = stats["types"].most_common(
+            1)[0] if stats["types"] else ("otro", 0)
         peak_hours.append({
             "hour": f"{hour:02d}:00 - {hour:02d}:59",
             "incident_count": stats["count"],
             "most_common_type": most_common[0],
             "risk_level": "high" if stats["count"] > len(incidents) / 24 * 1.5 else "medium"
         })
-    
+
     critical_days = []
     for day, stats in sorted(day_stats.items(), key=lambda x: x[1]["count"], reverse=True):
-        most_common = stats["types"].most_common(1)[0] if stats["types"] else ("otro", 0)
+        most_common = stats["types"].most_common(
+            1)[0] if stats["types"] else ("otro", 0)
         critical_days.append({
             "day": day,
             "incident_count": stats["count"],
             "most_common_type": most_common[0]
         })
-    
+
     return {
         "peak_hours": peak_hours,
         "critical_days": critical_days,
@@ -289,11 +300,11 @@ def _analyze_critical_times(incidents: List[Dict[str, Any]]) -> Dict[str, Any]:
 def _analyze_recurrence(incidents: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Analiza tendencias de recurrencia de incidentes"""
     weekly_stats = defaultdict(lambda: {"count": 0, "types": Counter()})
-    
+
     for incident in incidents:
         timestamp = incident.get("createdAt")
         inc_type = incident.get("type", "otro")
-        
+
         if timestamp:
             try:
                 dt = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
@@ -302,30 +313,33 @@ def _analyze_recurrence(incidents: List[Dict[str, Any]]) -> Dict[str, Any]:
                 weekly_stats[week]["types"][inc_type] += 1
             except:
                 continue
-    
+
     weeks = sorted(weekly_stats.keys())
     if len(weeks) >= 2:
-        recent_avg = sum(weekly_stats[w]["count"] for w in weeks[-4:]) / min(4, len(weeks[-4:]))
-        older_avg = sum(weekly_stats[w]["count"] for w in weeks[:4]) / min(4, len(weeks[:4]))
-        
+        recent_avg = sum(weekly_stats[w]["count"]
+                         for w in weeks[-4:]) / min(4, len(weeks[-4:]))
+        older_avg = sum(weekly_stats[w]["count"]
+                        for w in weeks[:4]) / min(4, len(weeks[:4]))
+
         trend = "increasing" if recent_avg > older_avg * 1.1 else \
                 "decreasing" if recent_avg < older_avg * 0.9 else "stable"
-        trend_percentage = ((recent_avg - older_avg) / older_avg * 100) if older_avg > 0 else 0
+        trend_percentage = ((recent_avg - older_avg) /
+                            older_avg * 100) if older_avg > 0 else 0
     else:
         trend = "insufficient_data"
         trend_percentage = 0
         recent_avg = 0
-    
+
     all_types = Counter()
     for stats in weekly_stats.values():
         all_types.update(stats["types"])
-    
+
     return {
         "overall_trend": trend,
         "trend_percentage": round(trend_percentage, 2),
         "avg_incidents_per_week": round(recent_avg, 2),
         "most_recurrent_types": [
-            {"type": t, "count": c} 
+            {"type": t, "count": c}
             for t, c in all_types.most_common(5)
         ],
         "prediction": f"Tendencia {trend} - Se espera un promedio de {round(recent_avg)} incidentes por semana"
@@ -335,17 +349,17 @@ def _analyze_recurrence(incidents: List[Dict[str, Any]]) -> Dict[str, Any]:
 def _predict_by_location(incidents: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Predice tipos de incidentes más probables por ubicación"""
     location_type_map = defaultdict(lambda: Counter())
-    
+
     for incident in incidents:
         location = incident.get("location", "Desconocido")
         inc_type = incident.get("type", "otro")
         location_type_map[location][inc_type] += 1
-    
+
     predictions = []
     for location, type_counts in location_type_map.items():
         total = sum(type_counts.values())
         type_predictions = []
-        
+
         for inc_type, count in type_counts.most_common(3):
             probability = (count / total) * 100
             type_predictions.append({
@@ -353,20 +367,20 @@ def _predict_by_location(incidents: List[Dict[str, Any]]) -> List[Dict[str, Any]
                 "probability": round(probability, 2),
                 "historical_count": count
             })
-        
+
         predictions.append({
             "location": location,
             "predicted_types": type_predictions,
             "total_historical": total
         })
-    
+
     return predictions
 
 
 def _generate_recommendations(risk_zones: List[Dict], critical_times: Dict, incidents: List[Dict]) -> List[Dict[str, str]]:
     """Genera recomendaciones basadas en análisis"""
     recommendations = []
-    
+
     if risk_zones and len(risk_zones) > 0:
         top_zone = risk_zones[0]
         recommendations.append({
@@ -376,7 +390,7 @@ def _generate_recommendations(risk_zones: List[Dict], critical_times: Dict, inci
             "description": f"Esta zona ha registrado {top_zone['total_incidents']} incidentes. Se recomienda aumentar vigilancia y mantenimiento preventivo.",
             "action": "Asignar personal adicional a esta zona"
         })
-    
+
     if critical_times and critical_times.get("peak_hours"):
         peak = critical_times["peak_hours"][0]
         recommendations.append({
@@ -386,7 +400,7 @@ def _generate_recommendations(risk_zones: List[Dict], critical_times: Dict, inci
             "description": f"Mayor incidencia de {peak['most_common_type']} durante este horario.",
             "action": "Programar rondas preventivas en este horario"
         })
-    
+
     type_counts = Counter(inc.get("type") for inc in incidents)
     if type_counts:
         most_common = type_counts.most_common(1)[0]
@@ -398,6 +412,5 @@ def _generate_recommendations(risk_zones: List[Dict], critical_times: Dict, inci
                 "description": f"Alta recurrencia de problemas de {most_common[0]} ({most_common[1]} casos).",
                 "action": "Implementar programa de mantenimiento preventivo trimestral"
             })
-    
-    return recommendations
 
+    return recommendations

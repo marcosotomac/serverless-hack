@@ -213,11 +213,12 @@ export default function AdminIncidentsPage() {
         const data = await response.json();
         console.log("Staff data:", data);
         setStaffList(data.staff || []);
-        
+
         if (!data.staff || data.staff.length === 0) {
           console.warn("No staff members found");
           toast.info("No hay personal disponible", {
-            description: "Asegúrate de tener usuarios con rol 'personal' registrados",
+            description:
+              "Asegúrate de tener usuarios con rol 'personal' registrados",
           });
         }
       } else {
@@ -322,9 +323,9 @@ export default function AdminIncidentsPage() {
   const assignIncident = async (incidentId: string, staffEmail: string) => {
     try {
       setDialogLoading(true);
-      
+
       console.log("Assigning incident:", incidentId, "to:", staffEmail);
-      
+
       const response = await fetch(
         `https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents/${incidentId}/assign`,
         {
@@ -338,6 +339,7 @@ export default function AdminIncidentsPage() {
       );
 
       console.log("Assignment response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
         const result = await response.json();
@@ -348,18 +350,35 @@ export default function AdminIncidentsPage() {
         await fetchIncidents();
         closeDialog();
       } else {
-        const errorData = await response.json().catch(() => ({ 
-          error: `Error ${response.status}: ${response.statusText}` 
-        }));
-        console.error("Assignment error:", errorData);
+        // Intentar obtener el cuerpo de la respuesta como texto primero
+        const responseText = await response.text();
+        console.error("Error response text:", responseText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = {
+            error: responseText || `Error ${response.status}: ${response.statusText}`,
+          };
+        }
+        
+        console.error("Parsed assignment error:", errorData);
         toast.error("Error al asignar incidente", {
-          description: errorData.error || errorData.message || "Ocurrió un error desconocido",
+          description:
+            errorData.error ||
+            errorData.message ||
+            errorData.detail ||
+            `Error ${response.status}: ${response.statusText}`,
         });
       }
     } catch (err) {
       console.error("Error assigning incident:", err);
       toast.error("Error de conexión", {
-        description: err instanceof Error ? err.message : "No se pudo conectar con el servidor",
+        description:
+          err instanceof Error
+            ? err.message
+            : "No se pudo conectar con el servidor",
       });
     } finally {
       setDialogLoading(false);
@@ -760,7 +779,9 @@ export default function AdminIncidentsPage() {
                                   size="sm"
                                   variant="outline"
                                   className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm"
-                                  onClick={() => openDialog(incident, "priority")}
+                                  onClick={() =>
+                                    openDialog(incident, "priority")
+                                  }
                                 >
                                   <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                                   <span className="hidden xs:inline">
@@ -771,22 +792,25 @@ export default function AdminIncidentsPage() {
                                   </span>
                                 </Button>
 
-                                {!incident.assignedTo && incident.status !== "resuelto" && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
-                                    onClick={() => openDialog(incident, "assign")}
-                                  >
-                                    <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    <span className="hidden xs:inline">
-                                      Asignar
-                                    </span>
-                                    <span className="xs:hidden text-[10px]">
-                                      Asig.
-                                    </span>
-                                  </Button>
-                                )}
+                                {!incident.assignedTo &&
+                                  incident.status !== "resuelto" && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                      onClick={() =>
+                                        openDialog(incident, "assign")
+                                      }
+                                    >
+                                      <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
+                                      <span className="hidden xs:inline">
+                                        Asignar
+                                      </span>
+                                      <span className="xs:hidden text-[10px]">
+                                        Asig.
+                                      </span>
+                                    </Button>
+                                  )}
                               </>
                             )}
 
@@ -1083,12 +1107,17 @@ export default function AdminIncidentsPage() {
             <Button
               onClick={() => {
                 if (selectedIncident && selectedStaffEmail) {
-                  assignIncident(selectedIncident.incidentId, selectedStaffEmail);
+                  assignIncident(
+                    selectedIncident.incidentId,
+                    selectedStaffEmail
+                  );
                 } else {
                   toast.error("Selecciona un miembro del personal");
                 }
               }}
-              disabled={dialogLoading || !selectedStaffEmail || staffList.length === 0}
+              disabled={
+                dialogLoading || !selectedStaffEmail || staffList.length === 0
+              }
               className="bg-blue-600 hover:bg-blue-700"
             >
               {dialogLoading ? "Asignando..." : "Asignar"}

@@ -137,7 +137,8 @@ export default function PredictionsPage() {
     const userData = getUser();
     if (userData?.role !== "autoridad") {
       toast.error("Acceso denegado", {
-        description: "Solo las autoridades pueden acceder a análisis predictivo",
+        description:
+          "Solo las autoridades pueden acceder a análisis predictivo",
       });
       router.push("/admin/incidents");
       return;
@@ -232,7 +233,8 @@ export default function PredictionsPage() {
                   Análisis Predictivo con IA
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Patrones, tendencias y predicciones basadas en {data.metadata.analyzed_incidents} incidentes
+                  Patrones, tendencias y predicciones basadas en{" "}
+                  {data.metadata.analyzed_incidents} incidentes
                 </p>
               </div>
             </div>
@@ -247,9 +249,12 @@ export default function PredictionsPage() {
         <Alert className="border-purple-500/20 bg-purple-500/5">
           <Info className="w-4 h-4" />
           <AlertDescription>
-            Este análisis utiliza {data.metadata.ml_model_used ? "un modelo de Machine Learning entrenado en AWS SageMaker" : "algoritmos heurísticos avanzados"} para
-            identificar zonas de riesgo, horarios críticos y tendencias de recurrencia.
-            Los datos se actualizan en tiempo real.
+            Este análisis utiliza{" "}
+            {data.metadata.ml_model_used
+              ? "un modelo de Machine Learning entrenado en AWS SageMaker"
+              : "algoritmos heurísticos avanzados"}{" "}
+            para identificar zonas de riesgo, horarios críticos y tendencias de
+            recurrencia. Los datos se actualizan en tiempo real.
           </AlertDescription>
         </Alert>
 
@@ -299,11 +304,19 @@ export default function PredictionsPage() {
                           </p>
                         </div>
                         <Badge
-                          className={RISK_LEVEL_COLORS[zone.risk_level as keyof typeof RISK_LEVEL_COLORS]}
+                          className={
+                            RISK_LEVEL_COLORS[
+                              zone.risk_level as keyof typeof RISK_LEVEL_COLORS
+                            ]
+                          }
                         >
-                          {zone.risk_level === "critical" ? "🔴 Crítico" :
-                           zone.risk_level === "high" ? "🟠 Alto" :
-                           zone.risk_level === "medium" ? "🟡 Medio" : "🟢 Bajo"}
+                          {zone.risk_level === "critical"
+                            ? "🔴 Crítico"
+                            : zone.risk_level === "high"
+                            ? "🟠 Alto"
+                            : zone.risk_level === "medium"
+                            ? "🟡 Medio"
+                            : "🟢 Bajo"}
                         </Badge>
                       </div>
 
@@ -415,7 +428,9 @@ export default function PredictionsPage() {
                             : RISK_LEVEL_COLORS.medium
                         }
                       >
-                        {hour.risk_level === "high" ? "Alto Riesgo" : "Riesgo Medio"}
+                        {hour.risk_level === "high"
+                          ? "Alto Riesgo"
+                          : "Riesgo Medio"}
                       </Badge>
                     </div>
                   ))}
@@ -476,13 +491,15 @@ export default function PredictionsPage() {
                       <p
                         className={`text-2xl font-bold ${
                           TREND_COLORS[
-                            data.recurrence_trends.overall_trend as keyof typeof TREND_COLORS
+                            data.recurrence_trends
+                              .overall_trend as keyof typeof TREND_COLORS
                           ]
                         }`}
                       >
                         {data.recurrence_trends.overall_trend === "increasing"
                           ? "📈 Aumentando"
-                          : data.recurrence_trends.overall_trend === "decreasing"
+                          : data.recurrence_trends.overall_trend ===
+                            "decreasing"
                           ? "📉 Disminuyendo"
                           : data.recurrence_trends.overall_trend === "stable"
                           ? "➡️ Estable"
@@ -501,7 +518,9 @@ export default function PredictionsPage() {
                         Promedio Semanal
                       </p>
                       <p className="text-2xl font-bold">
-                        {data.recurrence_trends.avg_incidents_per_week.toFixed(1)}
+                        {data.recurrence_trends.avg_incidents_per_week.toFixed(
+                          1
+                        )}
                       </p>
                       <p className="text-sm text-muted-foreground mt-2">
                         incidentes/semana
@@ -630,7 +649,9 @@ export default function PredictionsPage() {
                         <h3 className="font-semibold text-lg">{rec.title}</h3>
                         <Badge
                           className={
-                            PRIORITY_COLORS[rec.priority as keyof typeof PRIORITY_COLORS]
+                            PRIORITY_COLORS[
+                              rec.priority as keyof typeof PRIORITY_COLORS
+                            ]
                           }
                         >
                           {rec.priority === "high"

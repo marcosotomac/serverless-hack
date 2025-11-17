@@ -37,7 +37,7 @@ def handler(event, context):
         if not assigned_user:
             print(f"User not found: {assigned_to}")
             return json_response(404, {"error": f"Usuario {assigned_to} no encontrado"})
-        
+
         user_role = assigned_user.get("role")
         if user_role != "personal":
             print(f"Invalid role for assignment: {user_role}")
@@ -53,7 +53,8 @@ def handler(event, context):
             print(f"Incident not found: {incident_id}")
             return json_response(404, {"error": "Incidente no encontrado"})
 
-        print(f"Incident found: {incident.get('type')} at {incident.get('location')}")
+        print(
+            f"Incident found: {incident.get('type')} at {incident.get('location')}")
 
         # Crear entrada de historial
         timestamp = datetime.utcnow().isoformat()
@@ -121,4 +122,3 @@ def handler(event, context):
             "error": "Error interno del servidor",
             "details": str(e)
         })
-
