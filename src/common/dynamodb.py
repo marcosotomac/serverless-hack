@@ -110,7 +110,11 @@ def update_incident(
         ":emptyList": [],
     }
     set_parts = []
-    for idx, (key, value) in enumerate(attributes.items()):
+    
+    # Filtrar updatedAt y history de attributes para evitar duplicados
+    filtered_attributes = {k: v for k, v in attributes.items() if k not in ['updatedAt', 'history']}
+    
+    for idx, (key, value) in enumerate(filtered_attributes.items()):
         placeholder_name = f"#attr{idx}"
         placeholder_value = f":val{idx}"
         attr_names[placeholder_name] = key

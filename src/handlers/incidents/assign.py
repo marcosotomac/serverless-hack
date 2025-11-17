@@ -66,10 +66,9 @@ def handler(event, context):
             "details": f"Asignado a {assigned_to}"
         }
 
-        # Actualizar el incidente
+        # Actualizar el incidente (updatedAt se maneja automáticamente)
         updates = {
-            "assignedTo": assigned_to,
-            "updatedAt": timestamp
+            "assignedTo": assigned_to
         }
 
         print(f"Updating incident with: {updates}")
