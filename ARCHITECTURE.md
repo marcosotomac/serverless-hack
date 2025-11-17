@@ -24,8 +24,8 @@ flowchart TB
 
     subgraph Lambda Core
         C1[Auth Lambdas]
-        C2[Incident Lambdas<br>(create/update/comment/assign/...)]
-        C3[Analytics Lambdas<br>(Export, Predict, Realtime)]
+        C2[Incident Lambdas (create/update/comment/assign)]
+        C3[Analytics Lambdas (Export, Predict, Realtime)]
         C4[Media/Layers]
     end
 
@@ -40,7 +40,7 @@ flowchart TB
     subgraph Integraciones
         E1[SMTP (Gmail)]
         E2[SageMaker Endpoint]
-        E3[Airflow en ECS Fargate<br>(Planeado)]
+        E3[Airflow en ECS Fargate (Planeado)]
     end
 
     A1 -->|REST/JSON| B1
