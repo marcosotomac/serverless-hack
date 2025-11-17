@@ -16,16 +16,17 @@ Tabla de Contenido
 
 Resumen Ejecutivo
 -----------------
-AlertaUTEC resuelve la gestión integral de incidentes en el campus universitario mediante una arquitectura 100 % serverless. La plataforma permite:
+AlertaUTEC centraliza el ciclo completo de gestión de incidentes del campus sobre una arquitectura **100 % serverless**. Sus funcionalidades clave:
 
-* Registro y autenticación de estudiantes, personal y autoridades.
-* Reporte de incidentes con adjuntos multimedia y notas.
-* Panel administrativo con filtros avanzados, priorización y cierre.
-* Actualización en tiempo real vía WebSockets.
-* Historial completo con trazabilidad de cada acción.
-* Predicción de patrones y zonas de riesgo usando AWS SageMaker (o heurísticas basadas en históricos).
+| Característica | Descripción |
+| --- | --- |
+| **Autenticación institucional** | Usuarios `@utec.edu.pe`, hashing PBKDF2, tokens HS256 y bienvenida por correo HTML. |
+| **Gestión por roles** | Estudiantes crean incidentes/comentan; personal actualiza estados; autoridades asignan, priorizan y analizan. |
+| **Multimedia + significancia** | Reportes con fotos/videos (S3) y botón de significancia para destacar casos críticos. |
+| **Panel en tiempo real** | Filtros avanzados, KPIs en vivo y acciones rápidas; WebSockets informan a personal/autoridades/reportante. |
+| **Analítica & exportación** | Métricas (Athena/DynamoDB), predicciones (SageMaker o heurística) y exportables en PDF/Excel/CSV. |
 
-Se emplean únicamente servicios administrados (Lambda, API Gateway, DynamoDB, S3, SageMaker, Amplify/CloudFront), garantizando escalabilidad automática y costos controlados.
+Todas las piezas corren sobre Lambda, API Gateway (HTTP y WebSocket), DynamoDB, S3, SageMaker y Amplify/CloudFront, asegurando **escalabilidad automática y bajo mantenimiento**.
 
 Arquitectura de Referencia
 --------------------------
