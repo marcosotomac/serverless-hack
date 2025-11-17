@@ -45,7 +45,16 @@ import {
   Eye,
   Home,
   ArrowLeft,
+  UserPlus,
+  Users,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type IncidentStatus = "pendiente" | "en_atencion" | "resuelto";
 type UrgencyLevel = "baja" | "media" | "alta" | "critica";
@@ -60,10 +69,16 @@ interface Incident {
   status: IncidentStatus;
   reportedBy: string;
   reporterRole: string;
+  assignedTo?: string;
   createdAt: number;
   updatedAt: number;
   lastNote?: string;
   significanceCount?: number;
+}
+
+interface StaffMember {
+  email: string;
+  fullName: string;
 }
 
 const STATUS_CONFIG = {
@@ -127,7 +142,7 @@ export default function AdminIncidentsPage() {
     null
   );
   const [dialogType, setDialogType] = useState<
-    "status" | "priority" | "close" | null
+    "status" | "priority" | "close" | "assign" | null
   >(null);
   const [dialogLoading, setDialogLoading] = useState(false);
   const [dialogData, setDialogData] = useState<{ value: string; note: string }>(
@@ -136,6 +151,8 @@ export default function AdminIncidentsPage() {
       note: "",
     }
   );
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [selectedStaffEmail, setSelectedStaffEmail] = useState("");
   const user = getUser();
   const { subscribe } = useWebSocket();
 
@@ -181,6 +198,24 @@ export default function AdminIncidentsPage() {
       setLoading(false);
     }
   }, [router]);
+
+  const fetchStaff = useCallback(async () => {
+    try {
+      const response = await fetch(
+        "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/staff",
+        { headers: getAuthHeaders() }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setStaffList(data.staff || []);
+      } else {
+        console.error("Error fetching staff:", response.status);
+      }
+    } catch (err) {
+      console.error("Error fetching staff:", err);
+    }
+  }, []);
 
   // Subscribe to WebSocket events
   useEffect(() => {
@@ -239,11 +274,12 @@ export default function AdminIncidentsPage() {
     }
 
     fetchIncidents();
-  }, [router, fetchIncidents]);
+    fetchStaff();
+  }, [router, fetchIncidents, fetchStaff]);
 
   const openDialog = (
     incident: Incident,
-    type: "status" | "priority" | "close"
+    type: "status" | "priority" | "close" | "assign"
   ) => {
     setSelectedIncident(incident);
     setDialogType(type);
@@ -262,6 +298,40 @@ export default function AdminIncidentsPage() {
     setSelectedIncident(null);
     setDialogType(null);
     setDialogData({ value: "", note: "" });
+    setSelectedStaffEmail("");
+  };
+
+  const assignIncident = async (incidentId: string, staffEmail: string) => {
+    try {
+      setDialogLoading(true);
+      const response = await fetch(
+        `https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents/${incidentId}/assign`,
+        {
+          method: "PATCH",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ assignedTo: staffEmail }),
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Incidente asignado correctamente");
+        await fetchIncidents();
+        closeDialog();
+      } else {
+        const errorData = await response.json();
+        toast.error("Error al asignar incidente", {
+          description: errorData.message || "Ocurrió un error",
+        });
+      }
+    } catch (err) {
+      console.error("Error assigning incident:", err);
+      toast.error("Error de conexión");
+    } finally {
+      setDialogLoading(false);
+    }
   };
 
   const handleDialogSubmit = async () => {
@@ -624,6 +694,14 @@ export default function AdminIncidentsPage() {
                                   {incident.reporterRole}
                                 </span>
                               </div>
+                              {incident.assignedTo && (
+                                <div className="flex items-center gap-1 sm:gap-1.5 text-blue-600 dark:text-blue-400">
+                                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  <span className="text-[10px] sm:text-xs font-medium">
+                                    {incident.assignedTo}
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
                             <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
@@ -645,20 +723,39 @@ export default function AdminIncidentsPage() {
                             </Button>
 
                             {user?.role === "autoridad" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm"
-                                onClick={() => openDialog(incident, "priority")}
-                              >
-                                <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                                <span className="hidden xs:inline">
-                                  Prioridad
-                                </span>
-                                <span className="xs:hidden text-[10px]">
-                                  Prior.
-                                </span>
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm"
+                                  onClick={() => openDialog(incident, "priority")}
+                                >
+                                  <ArrowUpCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  <span className="hidden xs:inline">
+                                    Prioridad
+                                  </span>
+                                  <span className="xs:hidden text-[10px]">
+                                    Prior.
+                                  </span>
+                                </Button>
+
+                                {!incident.assignedTo && incident.status !== "resuelto" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm text-blue-600 border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                    onClick={() => openDialog(incident, "assign")}
+                                  >
+                                    <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    <span className="hidden xs:inline">
+                                      Asignar
+                                    </span>
+                                    <span className="xs:hidden text-[10px]">
+                                      Asig.
+                                    </span>
+                                  </Button>
+                                )}
+                              </>
                             )}
 
                             {(user?.role === "personal" ||
@@ -888,6 +985,66 @@ export default function AdminIncidentsPage() {
               className="bg-green-600 hover:bg-green-700"
             >
               {dialogLoading ? "Cerrando..." : "Cerrar Incidente"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Incident Dialog */}
+      <Dialog open={dialogType === "assign"} onOpenChange={() => closeDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asignar Incidente a Personal</DialogTitle>
+            <DialogDescription>
+              Selecciona un miembro del personal para asignarle este incidente
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Personal Disponible</Label>
+              <Select
+                value={selectedStaffEmail}
+                onValueChange={setSelectedStaffEmail}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar personal..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {staffList.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      No hay personal disponible
+                    </div>
+                  ) : (
+                    staffList.map((staff) => (
+                      <SelectItem key={staff.email} value={staff.email}>
+                        {staff.fullName} ({staff.email})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closeDialog}
+              disabled={dialogLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedIncident && selectedStaffEmail) {
+                  assignIncident(selectedIncident.incidentId, selectedStaffEmail);
+                }
+              }}
+              disabled={dialogLoading || !selectedStaffEmail}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {dialogLoading ? "Asignando..." : "Asignar"}
             </Button>
           </DialogFooter>
         </DialogContent>
