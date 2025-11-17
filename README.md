@@ -155,9 +155,9 @@ Despliegue
 4. Producción: Amplify Hosting o Vercel con las mismas variables.
 
 ### Seed de datos inicial
-1. Define `API_BASE_URL` con la URL del API HTTP (incluye el stage, por ejemplo `https://xxxx.execute-api.us-east-1.amazonaws.com/dev`).
+1. Define `API_BASE_URL` con la URL del API HTTP (por ejemplo `https://xxxx.execute-api.us-east-1.amazonaws.com`).
 2. Instala la dependencia local del script: `pip install requests`.
-3. Ejecuta `python scripts/seed_data.py`. Se crearán usuarios de ejemplo (autoridad, personal y estudiantes) e incidentes con comentarios, votos de significancia y flujos de estado para probar el panel y la analítica.
+3. Ejecuta `python scripts/seed_data.py`. Se registrarán 30 usuarios de prueba (2 autoridades, 8 personal y 20 estudiantes). Se reutilizan si ya existen.
 
 Variables de Entorno y Credenciales
 -----------------------------------
