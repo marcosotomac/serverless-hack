@@ -201,19 +201,37 @@ export default function AdminIncidentsPage() {
 
   const fetchStaff = useCallback(async () => {
     try {
+      console.log("Fetching staff list...");
       const response = await fetch(
         "https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/staff",
         { headers: getAuthHeaders() }
       );
 
+      console.log("Staff response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log("Staff data:", data);
         setStaffList(data.staff || []);
+        
+        if (!data.staff || data.staff.length === 0) {
+          console.warn("No staff members found");
+          toast.info("No hay personal disponible", {
+            description: "Asegúrate de tener usuarios con rol 'personal' registrados",
+          });
+        }
       } else {
-        console.error("Error fetching staff:", response.status);
+        const errorText = await response.text();
+        console.error("Error fetching staff:", response.status, errorText);
+        toast.error("Error al cargar personal", {
+          description: `Error ${response.status}`,
+        });
       }
     } catch (err) {
       console.error("Error fetching staff:", err);
+      toast.error("Error de conexión", {
+        description: "No se pudo obtener la lista de personal",
+      });
     }
   }, []);
 
@@ -304,6 +322,9 @@ export default function AdminIncidentsPage() {
   const assignIncident = async (incidentId: string, staffEmail: string) => {
     try {
       setDialogLoading(true);
+      
+      console.log("Assigning incident:", incidentId, "to:", staffEmail);
+      
       const response = await fetch(
         `https://2dutzw4lw9.execute-api.us-east-1.amazonaws.com/incidents/${incidentId}/assign`,
         {
@@ -316,19 +337,30 @@ export default function AdminIncidentsPage() {
         }
       );
 
+      console.log("Assignment response status:", response.status);
+
       if (response.ok) {
-        toast.success("Incidente asignado correctamente");
+        const result = await response.json();
+        console.log("Assignment successful:", result);
+        toast.success("Incidente asignado correctamente", {
+          description: `Asignado a ${staffEmail}`,
+        });
         await fetchIncidents();
         closeDialog();
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ 
+          error: `Error ${response.status}: ${response.statusText}` 
+        }));
+        console.error("Assignment error:", errorData);
         toast.error("Error al asignar incidente", {
-          description: errorData.message || "Ocurrió un error",
+          description: errorData.error || errorData.message || "Ocurrió un error desconocido",
         });
       }
     } catch (err) {
       console.error("Error assigning incident:", err);
-      toast.error("Error de conexión");
+      toast.error("Error de conexión", {
+        description: err instanceof Error ? err.message : "No se pudo conectar con el servidor",
+      });
     } finally {
       setDialogLoading(false);
     }
@@ -996,35 +1028,48 @@ export default function AdminIncidentsPage() {
           <DialogHeader>
             <DialogTitle>Asignar Incidente a Personal</DialogTitle>
             <DialogDescription>
-              Selecciona un miembro del personal para asignarle este incidente
+              Selecciona un miembro del personal para asignarle este incidente.
+              Solo usuarios con rol "personal" pueden ser asignados.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Personal Disponible</Label>
-              <Select
-                value={selectedStaffEmail}
-                onValueChange={setSelectedStaffEmail}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar personal..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {staffList.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      No hay personal disponible
-                    </div>
-                  ) : (
-                    staffList.map((staff) => (
+            {staffList.length === 0 ? (
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  ⚠️ No hay personal disponible para asignar.
+                </p>
+                <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                  Asegúrate de tener usuarios registrados con rol "personal".
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Personal Disponible ({staffList.length})</Label>
+                <Select
+                  value={selectedStaffEmail}
+                  onValueChange={setSelectedStaffEmail}
+                  disabled={dialogLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar personal..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {staffList.map((staff) => (
                       <SelectItem key={staff.email} value={staff.email}>
                         {staff.fullName} ({staff.email})
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedStaffEmail && (
+                  <p className="text-xs text-muted-foreground">
+                    El incidente será asignado a{" "}
+                    <span className="font-semibold">{selectedStaffEmail}</span>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -1039,9 +1084,11 @@ export default function AdminIncidentsPage() {
               onClick={() => {
                 if (selectedIncident && selectedStaffEmail) {
                   assignIncident(selectedIncident.incidentId, selectedStaffEmail);
+                } else {
+                  toast.error("Selecciona un miembro del personal");
                 }
               }}
-              disabled={dialogLoading || !selectedStaffEmail}
+              disabled={dialogLoading || !selectedStaffEmail || staffList.length === 0}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {dialogLoading ? "Asignando..." : "Asignar"}
