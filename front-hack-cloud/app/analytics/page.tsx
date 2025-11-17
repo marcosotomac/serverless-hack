@@ -249,6 +249,13 @@ export default function AnalyticsPage() {
             )}
           </div>
           <div className="flex gap-3 items-center">
+            <Button
+              variant="default"
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={() => router.push("/analytics/predictions")}
+            >
+              🧠 Análisis Predictivo
+            </Button>
             <ThemeToggle />
             <Button
               variant="outline"
