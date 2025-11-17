@@ -463,7 +463,7 @@ def create_incidents(tokens: Dict[str, str]) -> List[str]:
             try:
                 api_request(
                     "PATCH",
-                    f"/incidents/{incident_id}/prioritize",
+                    f"/incidents/{incident_id}/priority",
                     token=autoridad_token,
                     json_body={"priority": incident["priority"]},
                 )
